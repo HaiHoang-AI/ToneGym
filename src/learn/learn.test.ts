@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { createRng, getChord } from '../theory';
+import { soundLength } from '../games/sound';
+import { createRng, getChord, getScale } from '../theory';
 import { getAnchor } from './anchors';
-import { generateLesson, GUIDED_COUNT, itemPc, lessonItems, semitonesOf, TRAP_COUNT } from './generators';
+import { generateLesson, GUIDED_COUNT, itemPc, lessonItems, progressionChords, questionSound, semitonesOf, TRAP_COUNT } from './generators';
 import { CHORDS_PATH } from './paths/chords';
 import { INTERVALS_PATH } from './paths/intervals';
+import { PROGRESSIONS_PATH } from './paths/progressions';
+import { SCALES_PATH } from './paths/scales';
 import { applySession, masteryNow, newMastery, pathMastery } from './mastery';
 import { PITCH_PATH } from './paths/pitch';
 import { computeStars, lessonsToSkip, pathStatuses } from './stars';
@@ -241,5 +244,56 @@ describe('chords path', () => {
     // The Toccata chord is a diminished seventh.
     const t = getAnchor('ch-toccata').harmony!.at(-1)!;
     expect(t.map((n) => n - t[0]!)).toEqual([0, 3, 6, 9]);
+  });
+});
+
+describe('scales and progressions paths', () => {
+  it('both have 30 items with the planned shape', () => {
+    for (const path of [SCALES_PATH, PROGRESSIONS_PATH]) {
+      expect(path.lessons, path.id).toHaveLength(30);
+      expect(path.lessons.filter((x) => x.kind === 'lesson')).toHaveLength(22);
+      expect(path.lessons.filter((x) => x.kind === 'checkpoint')).toHaveLength(6);
+      expect(path.lessons.at(-1)!.kind).toBe('final');
+      expect(new Set(path.lessons.map((x) => x.id)).size).toBe(30);
+      for (const l of path.lessons) for (const id of l.anchors) expect(() => getAnchor(id)).not.toThrow();
+    }
+  });
+
+  it('scale questions play the named scale, up or down as the lesson says', () => {
+    const rng = createRng(4);
+    for (const lesson of SCALES_PATH.lessons) {
+      const q = generateLesson(lesson, rng, 'scales');
+      for (const x of [...q.tries, ...q.guided, ...q.main, ...q.traps]) {
+        expect(lessonItems(lesson)).toContain(x.itemId);
+        const sorted = [...x.notes].sort((a, c) => a - c);
+        expect(sorted.slice(0, -1).map((n) => n - sorted[0]!)).toEqual([...getScale(x.itemId).formula]);
+        if (x.stage === 'main' && lesson.direction === 'down') expect(x.notes[0]).toBeGreaterThan(x.notes.at(-1)!);
+        if (x.stage === 'main' && lesson.direction === 'up') expect(x.notes[0]).toBeLessThan(x.notes.at(-1)!);
+      }
+    }
+  });
+
+  it('every progression parses, starts on its key and fits the exam time', () => {
+    const rng = createRng(8);
+    for (const lesson of PROGRESSIONS_PATH.lessons) {
+      for (const id of lessonItems(lesson)) expect(() => progressionChords(id, 60), id).not.toThrow();
+      const q = generateLesson(lesson, rng, 'progressions');
+      for (const x of [...q.tries, ...q.guided, ...q.main, ...q.traps]) {
+        expect(x.chords!.length).toBe(x.itemId.split('-').length);
+        if (lesson.register === 'key') expect(x.root).toBe(60);
+        if (lesson.timeLimitMs) expect(soundLength(questionSound(x)) * 1000).toBeLessThan(lesson.timeLimitMs);
+      }
+    }
+  });
+
+  it('anchor accompaniment and melody line up', () => {
+    for (const id of ['pr-i-v-i', 'pr-amazing', 'pr-twinkle', 'pr-pop', 'pr-canon', 'pr-andalusian', 'pr-mixolydian', 'pr-blues', 'sc-joy-major', 'sc-chromatic']) {
+      const a = getAnchor(id);
+      if (a.harmony) expect(a.harmony, id).toHaveLength(a.notes.length);
+      if (a.beats) expect(a.beats, id).toHaveLength(a.notes.length);
+    }
+    // Joy to the World is the major scale going down.
+    const joy = getAnchor('sc-joy-major').notes;
+    expect(joy.map((n) => n - joy.at(-1)!).reverse()).toEqual([0, 2, 4, 5, 7, 9, 11, 12]);
   });
 });

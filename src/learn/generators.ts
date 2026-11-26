@@ -1,6 +1,6 @@
 import type { Sound } from '../games/types';
-import { concat, harmonic, melodic } from '../games/sound';
-import { chordNotes, getChord, getInterval, type Bilingual, type IntervalId, type Rng } from '../theory';
+import { chordSequence, concat, harmonic, melodic } from '../games/sound';
+import { buildScale, chordNotes, getChord, getInterval, getScale, parseProgression, PROGRESSIONS, realizeProgression, type Bilingual, type IntervalId, type Rng } from '../theory';
 import { REGISTERS, type Direction, type LearnQuestion, type LessonDef, type PathId, type QuestionStage, type Register, type TrapSpec } from './types';
 
 /** The twelve pitch items of the Pitch path, by pitch class. */
@@ -14,10 +14,23 @@ export const CHORD_ITEMS = ['maj', 'min', 'dim', 'aug', 'sus4', 'maj7', 'dom7', 
 
 const CHORD_SYMBOLS: Record<string, string> = { maj: 'M', min: 'm', dim: '°', aug: '+', sus4: 'sus4', maj7: 'maj7', dom7: '7', min7: 'm7', m7b5: 'ø7', dim7: '°7' };
 
+/** Scales of the Scales path, in the order they are taught. */
+export const SCALE_ITEMS = [
+  'major', 'naturalMinor', 'majorPentatonic', 'minorPentatonic', 'blues', 'harmonicMinor', 'melodicMinor',
+  'dorian', 'mixolydian', 'lydian', 'phrygian', 'locrian', 'wholeTone', 'chromatic',
+] as const;
+
+/** "I-V-vi-IV" → "I–V–vi–IV", "bVII" → "♭VII". */
+export function progressionLabel(id: string): string {
+  return id.split('-').map((x) => x.replace(/^b/, '♭').replace('64', '⁶₄').replace(/6$/, '⁶')).join('–');
+}
+
 /** Big label of an answer button. */
 export function itemSymbol(pathId: PathId, id: string): string {
   if (pathId === 'intervals') return intervalSymbol(id);
   if (pathId === 'chords') return CHORD_SYMBOLS[id] ?? id;
+  if (pathId === 'progressions') return progressionLabel(id);
+  if (pathId === 'scales') return getScale(id).name.en.replace(/ \(.*\)$/, '');
   return itemLabel(id);
 }
 
@@ -25,6 +38,8 @@ export function itemSymbol(pathId: PathId, id: string): string {
 export function itemName(pathId: PathId, id: string): Bilingual | undefined {
   if (pathId === 'intervals') return getInterval(id as IntervalId).name;
   if (pathId === 'chords') return getChord(id).name;
+  if (pathId === 'scales') return getScale(id).name;
+  if (pathId === 'progressions') return PROGRESSIONS.find((p) => p.numerals === id)?.name;
   return undefined;
 }
 
@@ -84,7 +99,8 @@ export function lessonItems(lesson: LessonDef): string[] {
 
 /** Answer buttons in a stable order (pitch class / interval size). */
 export function sortItems(pathId: PathId, items: readonly string[]): string[] {
-  const order: readonly string[] = pathId === 'intervals' ? INTERVAL_ITEMS : pathId === 'chords' ? CHORD_ITEMS : PITCH_ITEMS;
+  if (pathId === 'progressions') return [...items];
+  const order: readonly string[] = pathId === 'intervals' ? INTERVAL_ITEMS : pathId === 'chords' ? CHORD_ITEMS : pathId === 'scales' ? SCALE_ITEMS : PITCH_ITEMS;
   return [...items].sort((a, b) => order.indexOf(a) - order.indexOf(b));
 }
 
@@ -113,6 +129,18 @@ interface Ctx {
 /** Notes of one question for an item. */
 function build(pathId: PathId, lesson: LessonDef, stage: QuestionStage, itemId: string, rng: Rng, ctx: Ctx): LearnQuestion {
   const answerId = lesson.mode === 'yesno' ? (itemId === lesson.yesItem ? 'yes' : 'no') : itemId;
+  if (pathId === 'scales') {
+    const { from, to } = REGISTERS[ctx.register];
+    const root = lesson.root ?? rng.int(from, to);
+    const dir = pickDirection(ctx.direction ?? lesson.direction, rng);
+    return { stage, itemId, answerId, notes: buildScale(root, getScale(itemId), dir === 'down' ? 'descending' : 'ascending'), gap: 0.3, root };
+  }
+  if (pathId === 'progressions') {
+    const { from, to } = REGISTERS[ctx.register];
+    const root = lesson.root ?? rng.int(from, to);
+    const chords = progressionChords(itemId, root);
+    return { stage, itemId, answerId, notes: chords.flat(), chords, root };
+  }
   if (pathId === 'chords') {
     const { from, to } = REGISTERS[ctx.register];
     const root = lesson.root ?? rng.int(from, to);
@@ -184,14 +212,34 @@ export function generateLesson(lesson: LessonDef, rng: Rng, pathId: PathId = 'pi
   return { tries: [], guided, main, traps };
 }
 
+/** Notes of each chord of a progression in the key whose tonic is `root`. */
+export function progressionChords(numerals: string, root: number): number[][] {
+  return realizeProgression(parseProgression(numerals), root).map((c) => c.notes);
+}
+
+/** Seconds per chord: long progressions (12-bar blues) go faster. */
+export function chordGap(count: number): number {
+  return count > 8 ? 0.7 : 1.05;
+}
+
 /** The sound of a question. */
 export function questionSound(q: LearnQuestion): Sound {
-  const body = q.harmonic ? harmonic(q.notes, 1.5) : melodic(q.notes, 0.6);
+  if (q.chords) return chordSequence(q.chords, chordGap(q.chords.length));
+  const body = q.harmonic ? harmonic(q.notes, 1.5) : melodic(q.notes, q.gap ?? 0.6);
   return q.tail ? concat([body, harmonic(q.tail, 1.3)], 0.15) : body;
 }
 
 /** After a wrong answer: the player's answer, then the right one, from the same starting note. */
 export function compareSound(pathId: PathId, q: LearnQuestion, chosen: string | null, yesItem?: string): Sound | undefined {
+  if (pathId === 'scales' || pathId === 'progressions') {
+    const as = (id: string): Sound => {
+      if (pathId === 'scales') return melodic(buildScale(q.root!, getScale(id), q.notes[0]! > q.notes.at(-1)! ? 'descending' : 'ascending'), 0.3);
+      const chords = progressionChords(id, q.root!);
+      return chordSequence(chords, chordGap(chords.length));
+    };
+    if (chosen === 'yes' || chosen === 'no') return concat([questionSound(q), as(yesItem!)], 0.7);
+    return chosen ? concat([as(chosen), as(q.itemId)], 0.7) : undefined;
+  }
   if (pathId === 'chords') {
     const root = Math.min(...q.notes);
     const as = (id: string) => harmonic(chordNotes(root, getChord(id)), 1.3);

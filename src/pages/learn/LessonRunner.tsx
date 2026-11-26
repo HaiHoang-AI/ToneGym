@@ -7,7 +7,7 @@ import { Teacher, Yumika } from '../../components/art/Characters';
 import { AnchorCard, playAnchor } from '../../components/learn/AnchorCard';
 import { StarRow } from '../../components/learn/StarRow';
 import { PianoKeyboard, type KeyMark } from '../../components/PianoKeyboard';
-import { melodic } from '../../games/sound';
+import { chordSequence, melodic } from '../../games/sound';
 import { getAnchor } from '../../learn/anchors';
 import { compareSound, generateLesson, itemLabel, itemName, itemSymbol, itemPc, lessonItems, PITCH_ITEMS, questionSound, sortItems } from '../../learn/generators';
 import { getPath } from '../../learn/paths';
@@ -178,6 +178,8 @@ function LessonRunner({ path, lesson, onRetry }: { path: PathDef; lesson: Lesson
     if (isYesNo) return l(`Có phải ${name(lesson.yesItem!)} không?`, `Is it ${name(lesson.yesItem!)}?`);
     if (isPitch) return q.notes.length > 1 ? l('Nốt cuối cùng là nốt gì?', 'What is the last note?') : l('Nốt vừa nghe là nốt gì?', 'Which note was that?');
     if (path.id === 'chords') return l('Hợp âm gì?', 'Which chord?');
+    if (path.id === 'progressions') return l('Vòng hợp âm nào? (bắt đầu từ chủ âm)', 'Which progression? (starts on the tonic)');
+    if (path.id === 'scales') return q.notes[0]! > q.notes.at(-1)! ? l('Âm giai gì? (đi xuống)', 'Which scale? (going down)') : l('Âm giai gì? (đi lên)', 'Which scale? (going up)');
     const how = q.harmonic ? l('vang cùng lúc', 'together') : q.notes[1]! < q.notes[0]! ? l('đi xuống', 'going down') : l('đi lên', 'going up');
     return l(`Quãng gì? (${how})`, `Which interval? (${how})`);
   };
@@ -321,7 +323,7 @@ function LessonRunner({ path, lesson, onRetry }: { path: PathDef; lesson: Lesson
               <button type="button" className="btn btn-primary btn-sm" onClick={advance}>{l('Tiếp', 'Next')} →</button>
             </div>
           )}
-          {feedback && !isPitch && (
+          {feedback && !isPitch && !q.chords && (
             <PianoKeyboard from={36} to={84} sound={false} labels="c" naming={s.noteNaming} accidentals={s.accidentals} marks={Object.fromEntries([...q.notes, ...(q.tail ?? [])].map((n) => [n, 'correct' as KeyMark]))} />
           )}
           {feedback?.ok && graded && <div className="font-semibold text-good-ink">✓ {l('Đúng!', 'Right!')}</div>}
@@ -391,10 +393,11 @@ function SlideView({ slide, index, total, color, onBack, onNext }: { slide: Slid
   const from = keys.length ? Math.floor(Math.min(...keys) / 12) * 12 : 60;
   const to = keys.length ? Math.max(from + 11, Math.ceil((Math.max(...keys) + 1) / 12) * 12 - 1) : 71;
   const marks: Record<number, KeyMark> = Object.fromEntries(keys.map((k) => [k, 'hint' as KeyMark]));
-  const play = async (notes: number[], together?: boolean) => {
+  const play = async (notes: number[], together?: boolean, chords?: number[][]) => {
     await audio.start();
     audio.stop();
-    if (together) audio.playNotes(notes, 1.6);
+    if (chords) await audio.playSequence(chordSequence(chords, 1.05).steps);
+    else if (together) audio.playNotes(notes, 1.6);
     else await audio.playSequence(melodic(notes, 0.55).steps);
   };
   return (
@@ -410,7 +413,7 @@ function SlideView({ slide, index, total, color, onBack, onNext }: { slide: Slid
       {keys.length > 0 && <PianoKeyboard from={from} to={to} marks={marks} labels="all" naming={settings.noteNaming} accidentals={settings.accidentals} />}
       {slide.examples && slide.examples.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {slide.examples.map((e, i) => <button key={i} type="button" className="btn btn-sm" onClick={() => void play(e.notes, e.together)}>▶ {l(e.label)}</button>)}
+          {slide.examples.map((e, i) => <button key={i} type="button" className="btn btn-sm" onClick={() => void play(e.notes, e.together, e.chords)}>▶ {l(e.label)}</button>)}
         </div>
       )}
       <div className="flex justify-between gap-2">

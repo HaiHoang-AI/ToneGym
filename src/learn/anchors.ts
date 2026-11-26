@@ -144,7 +144,50 @@ export const CHORD_ANCHORS: readonly AnchorSong[] = [
   },
 ];
 
-const BY_ID = new Map([...ANCHORS, ...INTERVAL_ANCHORS, ...CHORD_ANCHORS].map((a) => [a.id, a]));
+/** Accompaniment from a sparse map: index → chord. */
+const withHarmony = (length: number, map: Record<number, number[]>): (number[] | null)[] =>
+  Array.from({ length }, (_, i) => map[i] ?? null);
+
+const JOY = [72, 71, 69, 67, 65, 64, 62, 60];
+const JOY_BEATS = [2, 1.5, 0.5, 3, 1, 2, 2, 3];
+const CHORD_I = [48, 52, 55];
+const CHORD_IV = [41, 45, 48];
+const CHORD_V = [43, 47, 50];
+
+export const SCALE_ANCHORS: readonly AnchorSong[] = [
+  { id: 'sc-joy-major', title: { vi: 'Joy to the World', en: 'Joy to the World' }, source: PD('Thánh ca, nhạc Lowell Mason phỏng Handel (1839)', 'Hymn, Lowell Mason after Handel (1839)'), notes: JOY, beats: JOY_BEATS, highlight: [0, 1, 2, 3, 4, 5, 6, 7] },
+  { id: 'sc-greensleeves-minor', title: { vi: 'Greensleeves', en: 'Greensleeves' }, source: PD('Dân ca Anh thế kỷ 16', '16th-century English folk song'), notes: GREENSLEEVES, beats: GREENSLEEVES_BEATS, highlight: [4, 8] },
+  { id: 'sc-amazing-penta', title: { vi: 'Amazing Grace', en: 'Amazing Grace' }, source: PD('Thánh ca Mỹ thế kỷ 19', '19th-century American hymn'), notes: AMAZING, beats: AMAZING_BEATS, highlight: [0, 1, 2, 5, 7] },
+  { id: 'sc-auld-penta', title: { vi: 'Auld Lang Syne', en: 'Auld Lang Syne' }, source: AULD_SRC, notes: AULD, beats: AULD_BEATS, highlight: idx(AULD, [62, 69]) },
+  { id: 'sc-minor-penta', title: { vi: 'Câu riff ngũ cung thứ', en: 'Minor pentatonic riff' }, source: DEMO_SRC, notes: [57, 60, 62, 64, 67, 69, 67, 64, 62, 60, 57], beats: [0.5, 0.5, 0.5, 0.5, 0.5, 1, 0.5, 0.5, 0.5, 0.5, 2], highlight: [1, 4] },
+  { id: 'sc-blues', title: { vi: 'Câu blues với nốt "blue"', en: 'Blues lick with the blue note' }, source: DEMO_SRC, notes: [60, 63, 65, 66, 67, 70, 72, 70, 67, 66, 65, 63, 60], beats: [0.5, 0.5, 0.5, 0.5, 1, 0.5, 1, 0.5, 0.5, 0.5, 0.5, 0.5, 2], highlight: [3, 9] },
+  { id: 'sc-harmonic-minor', title: { vi: 'Thứ hòa âm: bước quãng 2 tăng', en: 'Harmonic minor: the augmented second' }, source: DEMO_SRC, notes: [57, 59, 60, 62, 64, 65, 68, 69, 68, 65, 64], beats: [1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2], highlight: [5, 6, 8, 9] },
+  { id: 'sc-melodic-minor', title: { vi: 'Thứ giai điệu đi lên', en: 'Melodic minor going up' }, source: DEMO_SRC, notes: [57, 59, 60, 62, 64, 66, 68, 69], beats: [1, 1, 1, 1, 1, 1, 1, 2], highlight: [5, 6] },
+  { id: 'sc-dorian', title: { vi: 'Màu Dorian: thứ có Si♮ (trên Rê)', en: 'Dorian colour: minor with a natural 6th (on D)' }, source: DEMO_SRC, notes: [62, 65, 69, 71, 69, 65, 62], beats: [1, 1, 1, 2, 1, 1, 2], highlight: [3] },
+  { id: 'sc-mixolydian', title: { vi: 'Màu Mixolydian: trưởng có ♭7', en: 'Mixolydian colour: major with ♭7' }, source: DEMO_SRC, notes: [67, 71, 74, 77, 74, 71, 67], beats: [1, 1, 1, 2, 1, 1, 2], highlight: [3] },
+  { id: 'sc-lydian', title: { vi: 'Màu Lydian: ♯4 lấp lánh', en: 'Lydian colour: the bright ♯4' }, source: DEMO_SRC, notes: [60, 62, 64, 66, 67, 66, 64, 62, 60], highlight: [3, 5] },
+  { id: 'sc-phrygian', title: { vi: 'Màu Phrygian kiểu flamenco', en: 'Flamenco-style Phrygian' }, source: DEMO_SRC, notes: [64, 65, 64, 62, 60, 62, 64, 65, 64], beats: [1, 1, 1, 0.5, 0.5, 0.5, 0.5, 1, 2], highlight: [1, 7] },
+  { id: 'sc-locrian', title: { vi: 'Màu Locrian: ♭2 và ♭5', en: 'Locrian colour: ♭2 and ♭5' }, source: DEMO_SRC, notes: [59, 60, 62, 64, 65, 64, 62, 60, 59], highlight: [1, 4] },
+  { id: 'sc-whole-tone', title: { vi: 'Toàn cung kiểu Debussy', en: 'Whole tone, Debussy style' }, source: DEMO_SRC, notes: [72, 70, 68, 66, 64, 62, 60, 62, 64, 66], beats: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 1, 0.5, 0.5, 2], highlight: [0, 1, 2, 3, 4, 5] },
+  { id: 'sc-chromatic', title: { vi: 'Chạy chromatic kiểu "Chuyến bay của ong nghệ"', en: 'Chromatic run, "Flight of the Bumblebee" style' }, source: DEMO_SRC, notes: [76, 75, 74, 73, 72, 73, 72, 71, 70, 69, 70, 69, 68, 67, 68, 69], beats: Array(16).fill(0.25), bpm: 90, highlight: [0, 1, 2, 3, 4] },
+];
+
+const TWINKLE_FULL_HARMONY = withHarmony(14, { 0: CHORD_I, 4: CHORD_IV, 6: CHORD_I, 7: CHORD_IV, 9: CHORD_I, 11: CHORD_V, 13: CHORD_I });
+const CANON_BASS = [48, 43, 45, 40, 41, 36, 41, 43];
+const CANON_CHORDS = [[60, 64, 67], [59, 62, 67], [57, 60, 64], [55, 59, 64], [57, 60, 65], [55, 60, 64], [57, 60, 65], [59, 62, 67]];
+
+export const PROGRESSION_ANCHORS: readonly AnchorSong[] = [
+  { id: 'pr-i-v-i', title: { vi: 'Đi xa rồi về: I – V – I', en: 'Away and back: I – V – I' }, source: DEMO_SRC, notes: [64, 62, 60], beats: [2, 2, 3], highlight: [1], harmony: [CHORD_I, CHORD_V, CHORD_I] },
+  { id: 'pr-amazing', title: { vi: 'Amazing Grace: I – IV – I', en: 'Amazing Grace: I – IV – I' }, source: PD('Thánh ca Mỹ thế kỷ 19', '19th-century American hymn'), notes: AMAZING, beats: AMAZING_BEATS, highlight: [6], harmony: withHarmony(9, { 1: CHORD_I, 6: CHORD_IV, 8: CHORD_I }) },
+  { id: 'pr-twinkle', title: { vi: 'Twinkle: I – IV – I – V – I', en: 'Twinkle: I – IV – I – V – I' }, source: TWINKLE_SRC, notes: TWINKLE, beats: TWINKLE_BEATS, highlight: [4, 11], harmony: TWINKLE_FULL_HARMONY },
+  { id: 'pr-pop', title: { vi: 'Vòng pop I – V – vi – IV', en: 'Pop loop I – V – vi – IV' }, source: DEMO_SRC, notes: [64, 62, 60, 60], beats: [2, 2, 2, 2], highlight: [2], harmony: [CHORD_I, CHORD_V, [45, 48, 52], CHORD_IV] },
+  { id: 'pr-canon', title: { vi: 'Canon cung Rê (Pachelbel), dịch sang Đô', en: 'Canon in D (Pachelbel), moved to C' }, source: PD('Pachelbel (khoảng 1700)', 'Pachelbel (around 1700)'), notes: CANON_BASS, beats: Array(8).fill(2), bpm: 80, highlight: [3], harmony: CANON_CHORDS },
+  { id: 'pr-andalusian', title: { vi: 'Kết Andalusia kiểu flamenco', en: 'Flamenco-style Andalusian cadence' }, source: DEMO_SRC, notes: [57, 55, 53, 52], beats: [2, 2, 2, 3], highlight: [0, 1, 2, 3], harmony: [[45, 48, 52], [43, 47, 50], [41, 45, 48], [40, 44, 47]] },
+  { id: 'pr-mixolydian', title: { vi: 'Rock I – ♭VII – IV – I', en: 'Rock I – ♭VII – IV – I' }, source: DEMO_SRC, notes: [67, 65, 65, 64], beats: [2, 2, 2, 3], highlight: [1], harmony: [CHORD_I, [46, 50, 53], CHORD_IV, CHORD_I] },
+  { id: 'pr-blues', title: { vi: 'Blues 12 ô nhịp', en: '12-bar blues' }, source: DEMO_SRC, notes: [48, 48, 48, 48, 53, 53, 48, 48, 55, 53, 48, 55], beats: Array(12).fill(1.5), bpm: 120, highlight: [4, 8], harmony: [0, 0, 0, 0, 5, 5, 0, 0, 7, 5, 0, 7].map((o) => [52 + o, 55 + o, 58 + o]) },
+];
+
+const BY_ID = new Map([...ANCHORS, ...INTERVAL_ANCHORS, ...CHORD_ANCHORS, ...SCALE_ANCHORS, ...PROGRESSION_ANCHORS].map((a) => [a.id, a]));
 
 export function getAnchor(id: string): AnchorSong {
   const a = BY_ID.get(id);
