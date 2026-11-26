@@ -197,6 +197,36 @@ class AudioEngine {
     );
   }
 
+  private metronomeLoop: Tone.Loop | null = null;
+
+  /** Sample-accurate click track on the Tone transport. `onBeat(i)` fires on each beat (0 = downbeat). */
+  async startMetronome(bpm: number, beatsPerBar: number, onBeat?: (beat: number) => void) {
+    await this.start();
+    this.stopMetronome();
+    const transport = Tone.getTransport();
+    transport.bpm.value = bpm;
+    let beat = 0;
+    this.metronomeLoop = new Tone.Loop((time) => {
+      const b = beat % beatsPerBar;
+      this.getClicker().triggerAttackRelease(b === 0 ? 'G5' : 'C5', 0.05, time, b === 0 ? 0.9 : 0.6);
+      if (onBeat) Tone.getDraw().schedule(() => onBeat(b), time);
+      beat++;
+    }, '4n').start(0);
+    transport.start('+0.05');
+  }
+
+  setMetronomeBpm(bpm: number) {
+    Tone.getTransport().bpm.rampTo(bpm, 0.05);
+  }
+
+  stopMetronome() {
+    this.metronomeLoop?.dispose();
+    this.metronomeLoop = null;
+    const transport = Tone.getTransport();
+    transport.stop();
+    transport.cancel();
+  }
+
   /** Silences everything and cancels pending sequence callbacks. */
   stop() {
     this.generation++;

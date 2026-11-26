@@ -186,3 +186,44 @@ test('mic tools render and the tuner shows a simulated note', async ({ page }) =
   }
   expect(errors).toEqual([]);
 });
+
+test('theory tools render and the piano recorder exports MIDI', async ({ page }) => {
+  const errors = collectErrors(page);
+  for (const [path, heading] of [
+    ['/tools/progressions', 'Tạo vòng hợp âm'],
+    ['/tools/circle', 'Vòng quãng năm'],
+    ['/tools/scales', 'Tra âm giai'],
+    ['/tools/chords', 'Chơi hợp âm'],
+    ['/tools/interval-memorizer', 'Ghi nhớ quãng'],
+    ['/tools/metronome', 'Metronome'],
+  ] as const) {
+    await page.goto(path);
+    await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible();
+  }
+  await page.goto('/tools/progressions');
+  await page.getByRole('button', { name: 'Kết cơ bản' }).click();
+  await expect(page.getByRole('textbox').first()).toHaveValue('I-IV-V-I');
+
+  await page.goto('/tools/piano');
+  await page.getByRole('button', { name: /Ghi âm/ }).click();
+  for (const key of ['C4', 'E4', 'G4']) await page.getByRole('button', { name: key, exact: true }).click();
+  await page.getByRole('button', { name: /Dừng ghi/ }).click();
+  await expect(page.getByText('3 nốt').first()).toBeVisible();
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: /Xuất MIDI/ }).click();
+  expect((await download).suggestedFilename()).toMatch(/\.mid$/);
+  expect(errors).toEqual([]);
+});
+
+test('a MIDI keyboard can answer a chord in play mode', async ({ page }) => {
+  await page.goto('/exercises');
+  await page.getByRole('tab', { name: 'Hợp âm', exact: true }).click();
+  await page.getByRole('button', { name: 'Chơi trên piano' }).click();
+  await page.getByRole('button', { name: /Bắt đầu$/ }).first().click();
+  await expect(page.getByText(/Giữ Ctrl và bấm các nốt/)).toBeVisible();
+  // Any three-note chord from the MIDI keyboard is graded (right or wrong) like a mouse chord.
+  await page.evaluate(() => {
+    for (const n of [60, 64, 67]) window.__earlabMidi!.emit(n, 0.8, true);
+  });
+  await expect(page.getByText(/Chính xác!|Chưa đúng/)).toBeVisible();
+});

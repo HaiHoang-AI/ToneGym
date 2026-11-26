@@ -4,6 +4,7 @@ import { audio } from '../audio/engine';
 import { useAudioStatus } from '../audio/useAudioStatus';
 import { useProfile } from '../app/ProfileContext';
 import { PianoKeyboard, useComputerKeyboard, type KeyMark } from '../components/PianoKeyboard';
+import { MidiButton } from '../components/MidiButton';
 import {
   buildChord, buildScale, getChord, getInterval, getScale, intervalNotes, localName,
   parseProgression, PROGRESSIONS, realizeProgression, type IntervalId,
@@ -125,7 +126,10 @@ export function SoundCheckPage() {
           naming={profile.settings.noteNaming}
           accidentals={profile.settings.accidentals}
         />
-        <p className="text-xs text-muted">{t('sound.octave', { n: Math.floor(base / 12) - 1 })}</p>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-muted">{t('sound.octave', { n: Math.floor(base / 12) - 1 })}</p>
+          <MidiButton />
+        </div>
       </div>
 
       <div className="space-y-3">

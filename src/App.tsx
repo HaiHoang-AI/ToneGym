@@ -16,9 +16,11 @@ import { SightReadingPlaygroundPage } from './pages/SightReadingPlaygroundPage';
 import { ToolsPage } from './pages/tools/ToolsPage';
 import { PerfectPitchTool, TunerTool, VocalRangeTool } from './pages/tools/MicTools';
 import { SightSingingTool, WarmupTool } from './pages/tools/SingingTools';
+import { ChordTool, CircleTool, ProgressionTool, ScaleTool } from './pages/tools/TheoryTools';
+import { IntervalMemorizerTool, MetronomeTool, PianoRecorderTool } from './pages/tools/PracticeTools';
 
 /** Highest build phase merged into this app (gates "coming soon" items). */
-export const SHIPPED_PHASE = 5;
+export const SHIPPED_PHASE = 6;
 
 export default function App() {
   return (
@@ -40,6 +42,13 @@ export default function App() {
             <Route path="tools/perfect-pitch" element={<PerfectPitchTool />} />
             <Route path="tools/sight-singing" element={<SightSingingTool />} />
             <Route path="tools/warmup" element={<WarmupTool />} />
+            <Route path="tools/progressions" element={<ProgressionTool />} />
+            <Route path="tools/circle" element={<CircleTool />} />
+            <Route path="tools/scales" element={<ScaleTool />} />
+            <Route path="tools/chords" element={<ChordTool />} />
+            <Route path="tools/interval-memorizer" element={<IntervalMemorizerTool />} />
+            <Route path="tools/piano" element={<PianoRecorderTool />} />
+            <Route path="tools/metronome" element={<MetronomeTool />} />
             <Route path="sound" element={<SoundCheckPage />} />
             <Route path="profiles" element={<ProfilesPage />} />
             {SECTIONS.filter((s) => !s.ready).map((s) => (

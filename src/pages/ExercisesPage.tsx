@@ -4,6 +4,7 @@ import { useProfile } from '../app/ProfileContext';
 import { useL } from '../app/useL';
 import { PianoKeyboard, type KeyMark } from '../components/PianoKeyboard';
 import { RhythmInput } from '../components/RhythmInput';
+import { MidiButton } from '../components/MidiButton';
 import { Staff } from '../components/Staff';
 import { db } from '../db/schema';
 import {
@@ -452,6 +453,7 @@ export function ExercisesPage() {
                     ? l('Chơi lần lượt các nốt của âm giai đi lên, bắt đầu từ nốt vàng.', 'Play the scale going up, starting on the yellow key.')
                     : l('Nốt vàng là nốt đầu. Bấm nốt thứ hai.', 'The yellow key is the first note. Play the second one.')}
               </p>
+              <MidiButton />
               <PianoKeyboard from={36} to={84} marks={marks} onNote={onNote} onChord={onChord} naming={profile.settings.noteNaming} accidentals={profile.settings.accidentals} />
             </div>
           )}
