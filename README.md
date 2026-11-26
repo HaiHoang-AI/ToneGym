@@ -41,7 +41,7 @@ Nếu chưa chạy `npm run setup`, app vẫn chạy nhưng dùng tiếng synth 
 | 4 | Đọc nốt: 2 game khóa Sol/Fa, chế độ Đọc trong bài tập, Playground đọc nốt (khóa Sol/Đô/Fa) | ✅ |
 | 5 | 3 game hát (micro), trang Công cụ: máy lên dây, đo tầm giọng, cao độ tuyệt đối, luyện xướng âm, khởi động giọng | ✅ |
 | 6 | 7 công cụ nhạc lý (vòng hợp âm, vòng quãng năm, âm giai, hợp âm, ghi nhớ quãng, piano ghi âm + xuất MIDI, metronome) và bàn phím MIDI | ✅ |
-| 7 | Khóa nhạc lý, thi tuần, giải thưởng, cửa hàng nhạc cụ, chạy offline (PWA), sao lưu | ⏳ |
+| 7 | Khóa nhạc lý 7 chương (21 bài), thử thách tuần 60 giây, giải thưởng + chứng chỉ in được, cửa hàng nhạc cụ, chạy offline (PWA), sao lưu/khôi phục | ✅ |
 
 ## Cấu trúc mã
 

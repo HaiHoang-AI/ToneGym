@@ -12,10 +12,19 @@ export default defineConfig({
     baseURL: 'http://localhost:5173',
     ...devices['Desktop Chrome'],
   },
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: true,
-    timeout: 60_000,
-  },
+  webServer: [
+    {
+      command: 'npm run dev',
+      url: 'http://localhost:5173',
+      reuseExistingServer: true,
+      timeout: 60_000,
+    },
+    {
+      // Production build for the offline (service worker) test.
+      command: 'npm run build && npx vite preview --port 4173 --strictPort',
+      url: 'http://localhost:4173',
+      reuseExistingServer: true,
+      timeout: 180_000,
+    },
+  ],
 });

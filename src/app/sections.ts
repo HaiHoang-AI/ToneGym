@@ -45,7 +45,7 @@ export const SECTIONS: readonly Section[] = [
     },
   },
   {
-    key: 'learn', path: '/learn', phase: 7, ready: false,
+    key: 'learn', path: '/learn', phase: 7, ready: true,
     name: { vi: 'Học', en: 'Learn' },
     description: {
       vi: 'Khóa nhạc lý 7 chương do thầy nhạc dẫn, có ví dụ nghe và câu hỏi.',

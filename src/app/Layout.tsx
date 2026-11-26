@@ -64,7 +64,7 @@ export function Layout() {
   return (
     <div className="flex min-h-screen flex-col bg-bg text-ink">
       {!focus && (
-        <header className="sticky top-0 z-30 border-b border-line bg-bg/95 backdrop-blur">
+        <header className="sticky top-0 z-30 border-b border-line bg-bg/95 backdrop-blur print:hidden">
           <div className="mx-auto flex max-w-[1216px] flex-wrap items-center gap-3 px-4 py-3 sm:px-8">
             <NavLink to="/" className="flex items-center gap-2.5 text-ink no-underline">
               <Logo />

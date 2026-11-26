@@ -3,6 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router-dom';
 import { LatencyCalibrator } from '../components/LatencyCalibrator';
+import { BackupPanel } from '../components/BackupPanel';
+import { SHOP } from './ShopAwardsPages';
+import { useStats } from '../progress/hooks';
 import { useProfile } from '../app/ProfileContext';
 import {
   createProfile, deleteProfile, listProfiles, renameProfile, setActiveProfile, updateSettings,
@@ -81,6 +84,7 @@ export function ProfilesPage() {
   const profiles = useLiveQuery(() => listProfiles(), []) ?? [];
   const [newName, setNewName] = useState('');
   const s = profile.settings;
+  const stats = useStats(profile.id!);
 
   const set = (patch: Partial<ProfileSettings>) => void updateSettings(profile.id!, patch);
 
@@ -150,8 +154,9 @@ export function ProfilesPage() {
               value={s.instrument}
               onChange={(e) => set({ instrument: e.target.value as ProfileSettings['instrument'] })}
             >
-              <option value="piano">{t('profiles.instruments.piano')}</option>
-              <option value="synth">{t('profiles.instruments.synth')}</option>
+              {SHOP.filter((item) => s.unlockAll || stats.ownedInstruments.includes(item.id)).map((item) => (
+                <option key={item.id} value={item.id}>{s.language === 'vi' ? item.name.vi : item.name.en}</option>
+              ))}
             </select>
           </Field>
           <Field label={`${t('profiles.volume')} · ${Math.round(s.volume * 100)}%`}>
@@ -228,6 +233,7 @@ export function ProfilesPage() {
           </div>
         </fieldset>
       </section>
+      <BackupPanel />
     </div>
   );
 }

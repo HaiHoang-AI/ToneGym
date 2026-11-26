@@ -22,6 +22,8 @@ export interface ProfileSettings {
   workoutResetHour: number;
   /** Outfit of the mascot Yumika. */
   mascotOutfit: 'casual' | 'maid';
+  /** Every shop instrument available without buying. */
+  unlockAll: boolean;
 }
 
 export interface Profile {
@@ -107,6 +109,14 @@ export interface ToolDataEntry {
   updatedAt: number;
 }
 
+export interface ContestEntry {
+  id?: number;
+  week: string;
+  profileId: number;
+  score: number;
+  at: number;
+}
+
 export const DEFAULT_SETTINGS: ProfileSettings = {
   language: 'vi',
   theme: 'dark',
@@ -119,6 +129,7 @@ export const DEFAULT_SETTINGS: ProfileSettings = {
   workoutGames: [],
   workoutResetHour: 4,
   mascotOutfit: 'casual',
+  unlockAll: false,
 };
 
 export function emptyStats(profileId: number): ProfileStats {
@@ -145,6 +156,7 @@ export class EarLabDB extends Dexie {
   stats!: Table<ProfileStats, number>;
   exerciseBests!: Table<ExerciseBest, [number, string]>;
   toolData!: Table<ToolDataEntry, [number, string]>;
+  contestEntries!: Table<ContestEntry, number>;
 
   constructor(name = 'earlab') {
     super(name);
@@ -179,6 +191,17 @@ export class EarLabDB extends Dexie {
       stats: 'profileId',
       exerciseBests: '[profileId+exerciseId], profileId',
       toolData: '[profileId+key], profileId',
+    });
+    this.version(4).stores({
+      profiles: '++id, name, createdAt',
+      meta: 'key',
+      gameProgress: '[profileId+gameId], profileId',
+      attempts: '++id, profileId, gameId, at',
+      workouts: '[profileId+date], profileId',
+      stats: 'profileId',
+      exerciseBests: '[profileId+exerciseId], profileId',
+      toolData: '[profileId+key], profileId',
+      contestEntries: '++id, week, profileId',
     });
   }
 }

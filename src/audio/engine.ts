@@ -1,6 +1,20 @@
 import * as Tone from 'tone';
 
-export type InstrumentId = 'piano' | 'synth';
+export type InstrumentId = 'piano' | 'synth' | 'epiano' | 'organ' | 'marimba' | 'strings' | 'bell' | 'musicbox' | 'lead' | 'pad';
+
+type Preset = () => Tone.PolySynth;
+
+/** Synthesised voices sold in the shop (no extra downloads needed). */
+const PRESETS: Record<Exclude<InstrumentId, 'piano' | 'synth'>, Preset> = {
+  epiano: () => new Tone.PolySynth(Tone.FMSynth, { harmonicity: 3, modulationIndex: 6, envelope: { attack: 0.005, decay: 0.8, sustain: 0.2, release: 1 }, modulationEnvelope: { attack: 0.005, decay: 0.4, sustain: 0.1, release: 0.5 } }),
+  organ: () => new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'fatsine4', spread: 12, count: 3 } as never, envelope: { attack: 0.02, decay: 0.1, sustain: 0.9, release: 0.3 } }),
+  marimba: () => new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'sine' }, envelope: { attack: 0.001, decay: 0.45, sustain: 0, release: 0.2 } }),
+  strings: () => new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'fatsawtooth', spread: 20, count: 3 } as never, envelope: { attack: 0.25, decay: 0.3, sustain: 0.8, release: 1.2 } }),
+  bell: () => new Tone.PolySynth(Tone.FMSynth, { harmonicity: 5.07, modulationIndex: 12, envelope: { attack: 0.001, decay: 1.6, sustain: 0, release: 1.6 }, modulationEnvelope: { attack: 0.001, decay: 0.8, sustain: 0, release: 0.8 } }),
+  musicbox: () => new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'triangle' }, envelope: { attack: 0.001, decay: 0.6, sustain: 0, release: 0.6 } }),
+  lead: () => new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'square8' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.6, release: 0.3 } }),
+  pad: () => new Tone.PolySynth(Tone.AMSynth, { harmonicity: 1.5, envelope: { attack: 0.4, decay: 0.5, sustain: 0.8, release: 2 } }),
+};
 export type EngineStatus = 'idle' | 'loading' | 'ready' | 'fallback';
 
 /** One moment in a sequence: notes struck together, `at` seconds after the start. */
@@ -123,7 +137,21 @@ class AudioEngine {
     return this.synth;
   }
 
+  private presets = new Map<string, Tone.PolySynth>();
+
+  private preset(id: Exclude<InstrumentId, 'piano' | 'synth'>): Tone.PolySynth {
+    let v = this.presets.get(id);
+    if (!v) {
+      v = PRESETS[id]().connect(this.volume);
+      v.maxPolyphony = 64;
+      v.volume.value = -6;
+      this.presets.set(id, v);
+    }
+    return v;
+  }
+
   private voice(): Tone.Sampler | Tone.PolySynth {
+    if (this.instrument !== 'piano' && this.instrument !== 'synth') return this.preset(this.instrument);
     if (this.instrument === 'piano' && this.piano && this.statusValue === 'ready') return this.piano;
     return this.getSynth();
   }
@@ -238,6 +266,7 @@ class AudioEngine {
     }
     this.piano?.releaseAll();
     this.synth?.releaseAll();
+    this.presets.forEach((p) => p.releaseAll());
   }
 
   private later(ms: number, generation: number, fn: () => void, onCancel?: () => void) {

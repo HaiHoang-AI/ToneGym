@@ -11,6 +11,9 @@ import { useAllProgress, useStats, useWorkout } from '../progress/hooks';
 import { earIndex, nextRank, rankFor, skillScores } from '../progress/scoring';
 import { gameSkill, rebuildWorkout } from '../progress/store';
 import { WORKOUT_COINS } from '../workout/workout';
+import { isoWeekKey, themeFor } from '../contest/contest';
+import { LESSONS } from '../learn/course';
+import { useToolData } from '../tools/useToolData';
 
 function WorkoutPicker({ onClose }: { onClose: () => void }) {
   const profile = useProfile();
@@ -65,6 +68,10 @@ export function GymPage() {
   const progress = useAllProgress(profile.id!);
   const workout = useWorkout(profile.id!, profile.settings.workoutResetHour ?? 4);
   const [picking, setPicking] = useState(false);
+  const week = isoWeekKey(new Date());
+  const theme = themeFor(week);
+  const [lessonsDone] = useToolData<string[]>('lessons-done', []);
+  const nextLesson = LESSONS.find((x) => !lessonsDone.includes(x.id));
 
   const value = earIndex(progress);
   const rank = rankFor(value);
@@ -219,21 +226,29 @@ export function GymPage() {
 
         <div className="flex flex-[1_1_300px] flex-col gap-6">
           <section className="card flex flex-col gap-3">
-            <div className="label !mb-0">{l('Thử thách tuần', 'Weekly challenge')}</div>
-            <h2 className="h-display text-xl font-bold">{l('60 giây tốc độ', '60-second sprint')}</h2>
+            <div className="label !mb-0">{l('Thử thách tuần', 'Weekly challenge')} · {week}</div>
+            <h2 className="h-display text-xl font-bold">{l(theme.name)}</h2>
             <p className="text-sm leading-relaxed text-muted">
-              {l('Trả lời đúng càng nhiều càng tốt trong 60 giây, đấu với kỷ lục của bạn và các hồ sơ trên máy. Sẽ có ở giai đoạn 7.', 'Answer as many as you can in 60 seconds against your record and other local profiles. Arrives in phase 7.')}
+              {l(`60 giây ${l(getGame(theme.gameId)!.name).toLowerCase()}, đấu với kỷ lục của bạn và các hồ sơ trên máy.`, `60 seconds of ${l(getGame(theme.gameId)!.name)} against your record and other local profiles.`)}
             </p>
+            <div className="flex flex-wrap gap-2">
+              <Link className="btn self-start" to="/contest">{l('Vào thi · 4 xu', 'Enter · 4 coins')}</Link>
+              <Link className="btn btn-sm self-center" to="/shop">{l('Cửa hàng', 'Shop')}</Link>
+              <Link className="btn btn-sm self-center" to="/awards">{l('Giải thưởng', 'Awards')}</Link>
+            </div>
           </section>
           <section className="card flex flex-col gap-3" id="hoc">
             <div className="flex items-center gap-3">
               <Teacher mood="wave" size={72} />
               <div>
                 <div className="label !mb-0">{l('Khóa nhạc lý', 'Theory course')}</div>
-                <h2 className="h-display mt-1 text-xl font-bold">{l('Thầy nhạc đang soạn bài', 'The teacher is preparing lessons')}</h2>
+                <h2 className="h-display mt-1 text-xl font-bold">{nextLesson ? l(nextLesson.title) : l('Đã học xong cả khóa!', 'Course complete!')}</h2>
               </div>
             </div>
-            <p className="text-sm text-muted">{l('7 chương nhạc lý sẽ có ở giai đoạn 7.', 'Seven theory units arrive in phase 7.')}</p>
+            <div className="h-1.5 overflow-hidden rounded-full bg-surface-2"><div className="h-full bg-teal" style={{ width: `${(lessonsDone.length / LESSONS.length) * 100}%` }} /></div>
+            <Link to={nextLesson ? `/learn/${nextLesson.id}` : '/awards'} className="text-sm font-semibold text-link">
+              {nextLesson ? l(`Học tiếp bài ${lessonsDone.length + 1}/${LESSONS.length} →`, `Continue lesson ${lessonsDone.length + 1}/${LESSONS.length} →`) : l('Xem chứng chỉ →', 'See your certificate →')}
+            </Link>
           </section>
         </div>
       </div>
