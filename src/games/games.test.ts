@@ -18,8 +18,9 @@ describe('registry', () => {
     expect(playableGames().map((g) => g.id)).toEqual(expect.arrayContaining([
       'harmonic-intervals', 'ascending-intervals', 'descending-intervals', 'interval-compare',
       'chord-id', 'chord-by-name', 'inversions', 'scale-id', 'progressions',
-      'melody-hunt', 'melody-copy', 'rhythm-echo', 'rhythm-read', 'treble-reading', 'bass-reading',
+      'melody-hunt', 'melody-copy', 'rhythm-echo', 'rhythm-read', 'treble-reading', 'bass-reading', 'sing-back', 'sight-sing', 'sing-interval',
     ]));
+    expect(playableGames()).toHaveLength(18);
     for (const g of playableGames()) expect(g.phase).toBeLessThanOrEqual(5);
   });
 });
@@ -33,7 +34,13 @@ describe('question builders', () => {
           const q = game.makeQuestion!(level, rng, ctx);
           if (q.input) {
             expect(q.correctId).toBe('ok');
-            if (q.input.kind === 'notes') {
+            if (q.input.kind === 'sing') {
+              expect(q.input.targets.length).toBeGreaterThanOrEqual(1);
+              for (const n of q.input.targets) {
+                expect(n).toBeGreaterThanOrEqual(36);
+                expect(n).toBeLessThanOrEqual(84);
+              }
+            } else if (q.input.kind === 'notes') {
               expect(q.input.target.length).toBeGreaterThanOrEqual(3);
               for (const n of q.input.target) expect(q.input.palette).toContain(n);
             } else {

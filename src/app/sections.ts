@@ -37,7 +37,7 @@ export const SECTIONS: readonly Section[] = [
     description: { vi: 'Ear Index, hạng, điểm mạnh/yếu', en: 'Ear Index, ranks, strengths' },
   },
   {
-    key: 'tools', path: '/tools', phase: 6, ready: false,
+    key: 'tools', path: '/tools', phase: 5, ready: true,
     name: { vi: 'Công cụ', en: 'Tools' },
     description: {
       vi: 'Tạo vòng hợp âm, vòng quãng năm, tra âm giai, chơi hợp âm, ghi nhớ quãng, piano ghi âm, máy lên dây, đo tầm giọng…',

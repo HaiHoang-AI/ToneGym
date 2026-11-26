@@ -62,7 +62,7 @@ export interface Question {
    * Non-choice answers. With an input, `options` is empty and `correctId` is 'ok': the page
    * grades the player's notes or taps and answers 'ok' or 'wrong'.
    */
-  input?: NotesInput | RhythmInput;
+  input?: NotesInput | RhythmInput | SingInput;
   /** Notation to read (sight-reading games). */
   staff?: { clef: 'treble' | 'bass' | 'alto'; stacks: string[][] };
 }
@@ -75,6 +75,14 @@ export interface NotesInput {
   palette: number[];
   /** keyboard: play the notes on a piano; buttons: pick note names one by one. */
   style: 'keyboard' | 'buttons';
+}
+
+export interface SingInput {
+  kind: 'sing';
+  targets: number[];
+  toleranceCents: number;
+  octaveFree: boolean;
+  showNames: boolean;
 }
 
 export interface RhythmInput {
@@ -91,6 +99,8 @@ export interface GameContext {
   lang: string;
   accidentals: 'sharp' | 'flat';
   naming: NoteNaming;
+  /** Singer's comfortable range (MIDI), for the singing games. */
+  vocalRange?: { low: number; high: number };
 }
 
 export interface GameDef {

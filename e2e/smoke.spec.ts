@@ -17,7 +17,7 @@ test.describe('pages', () => {
     ['/stats', 'Thống kê & hạng'],
     ['/profiles', 'Hồ sơ trên máy này'],
     ['/sound', 'Kiểm tra âm thanh'],
-    ['/tools', 'sắp có'],
+    ['/tools', 'Công cụ nhạc lý'],
   ] as const) {
     test(`${path} renders without errors`, async ({ page }) => {
       const errors = collectErrors(page);
@@ -146,5 +146,43 @@ test('sight-reading playground and read-mode exercises render notation', async (
   await page.getByRole('button', { name: 'Đọc nốt' }).click();
   await page.getByRole('button', { name: /Bắt đầu$/ }).first().click();
   await expect(page.locator('[data-staff] svg')).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('singing: holding the right pitch passes, a wrong pitch fails (simulated mic)', async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.addInitScript(() => {
+    window.__earlabFakePitch = null;
+  });
+  await page.goto('/play/sing-interval');
+  await page.getByRole('button', { name: /Bắt đầu level/ }).click();
+  await page.waitForFunction(() => window.__earlab?.phase === 'question' && !!window.__earlab.target);
+  await page.getByRole('button', { name: /Bật micro và hát/ }).click();
+  const target = await page.evaluate(() => window.__earlab!.target![0]!);
+  await page.evaluate((t) => { window.__earlabFakePitch = t + 0.1; }, target);
+  await expect(page.getByText('Chính xác!')).toBeVisible();
+  await page.evaluate(() => { window.__earlabFakePitch = null; });
+  await page.getByRole('button', { name: /Chặng tiếp/ }).click();
+  await page.waitForFunction(() => window.__earlab?.phase === 'question');
+  await page.getByRole('button', { name: /Bật micro và hát/ }).click();
+  const t2 = await page.evaluate(() => window.__earlab!.target![0]!);
+  await page.evaluate((t) => { window.__earlabFakePitch = t + 2; }, t2);
+  await expect(page.getByText(/Chưa đúng/)).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('mic tools render and the tuner shows a simulated note', async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.addInitScript(() => {
+    window.__earlabFakePitch = 69;
+  });
+  await page.goto('/tools');
+  await page.getByRole('link', { name: /Máy lên dây/ }).click();
+  await page.getByRole('button', { name: /Bật micro/ }).click();
+  await expect(page.getByText('440.0 Hz')).toBeVisible();
+  for (const path of ['/tools/vocal-range', '/tools/perfect-pitch', '/tools/sight-singing', '/tools/warmup']) {
+    await page.goto(path);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  }
   expect(errors).toEqual([]);
 });
