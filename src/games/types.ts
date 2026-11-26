@@ -1,5 +1,5 @@
 import type { SequenceStep } from '../audio/engine';
-import type { Bilingual, NoteNaming, Rng } from '../theory';
+import type { Bilingual, NoteNaming, RhythmPattern, Rng } from '../theory';
 
 export type Skill = 'intervals' | 'chords' | 'scales' | 'progressions' | 'melody' | 'rhythm' | 'reading' | 'singing';
 
@@ -58,6 +58,31 @@ export interface Question {
   soundChoice?: boolean;
   /** Extra text shown large (e.g. the chord name to find). */
   display?: string;
+  /**
+   * Non-choice answers. With an input, `options` is empty and `correctId` is 'ok': the page
+   * grades the player's notes or taps and answers 'ok' or 'wrong'.
+   */
+  input?: NotesInput | RhythmInput;
+}
+
+export interface NotesInput {
+  kind: 'notes';
+  /** The melody to reproduce, in order. */
+  target: number[];
+  /** Notes offered to the player (always includes every target note). */
+  palette: number[];
+  /** keyboard: play the notes on a piano; buttons: pick note names one by one. */
+  style: 'keyboard' | 'buttons';
+}
+
+export interface RhythmInput {
+  kind: 'rhythm';
+  pattern: RhythmPattern;
+  bpm: number;
+  /** Echo games play the rhythm first; reading games show notation instead. */
+  playFirst: boolean;
+  showNotation: boolean;
+  toleranceMs: number;
 }
 
 export interface GameContext {

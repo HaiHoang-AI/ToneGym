@@ -39,8 +39,9 @@ describe('workout picking', () => {
     expect(picked[0]).toBe('scale-id');
     expect(new Set(picked).size).toBe(5);
     const skills = picked.map((id) => games.find((g) => g.id === id)!.skill);
-    // Four skills exist in phase 2, so the first four picks cover all of them.
-    expect(new Set(skills).size).toBe(4);
+    // With at least five skills available, the five picks all come from different skills.
+    const available = new Set(games.map((g) => g.skill)).size;
+    expect(new Set(skills).size).toBe(Math.min(5, available));
   });
 });
 

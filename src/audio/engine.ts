@@ -9,6 +9,14 @@ export interface SequenceStep {
   at: number;
   duration: number;
   velocity?: number;
+  /** 'click' plays a metronome tick instead of the instrument (notes[0] >= 90 = accented). */
+  instrument?: 'click';
+}
+
+/** A scheduled sequence: when it starts (performance.now() clock) and when it ends. */
+export interface Scheduled {
+  startPerfMs: number;
+  done: Promise<void>;
 }
 
 interface Manifest {
@@ -29,6 +37,7 @@ class AudioEngine {
   private volume = new Tone.Volume(-6).toDestination();
   private piano: Tone.Sampler | null = null;
   private synth: Tone.PolySynth | null = null;
+  private clicker: Tone.MembraneSynth | null = null;
   private instrument: InstrumentId = 'piano';
   private statusValue: EngineStatus = 'idle';
   private listeners = new Set<Listener>();
@@ -55,7 +64,20 @@ class AudioEngine {
   /** Must be called from a user gesture (click/keypress) the first time: browsers block autoplay. */
   async start(): Promise<void> {
     if (Tone.getContext().state !== 'running') await Tone.start();
+    // Small look-ahead keeps taps and sounds close together for the rhythm games.
+    Tone.getContext().lookAhead = 0.03;
     await this.load();
+  }
+
+  private getClicker(): Tone.MembraneSynth {
+    if (!this.clicker) {
+      this.clicker = new Tone.MembraneSynth({
+        pitchDecay: 0.008,
+        octaves: 2,
+        envelope: { attack: 0.001, decay: 0.08, sustain: 0, release: 0.02 },
+      }).connect(this.volume);
+    }
+    return this.clicker;
   }
 
   private load(): Promise<void> {
@@ -128,18 +150,35 @@ class AudioEngine {
    * (useful for highlighting keys). Resolves when the last note has finished.
    */
   playSequence(steps: readonly SequenceStep[], onStep?: (index: number) => void): Promise<void> {
+    return this.schedule(steps, onStep).done;
+  }
+
+  /**
+   * Like playSequence, but also reports when the first step will actually be heard, on the
+   * performance.now() clock (used to line up the player's taps with the rhythm).
+   */
+  schedule(steps: readonly SequenceStep[], onStep?: (index: number) => void): Scheduled {
     const generation = this.generation;
-    const start = Tone.now() + 0.05;
+    const lead = 0.08;
+    const raw = Tone.getContext().rawContext as AudioContext;
+    const start = raw.currentTime + lead;
+    const latency = (raw.outputLatency || raw.baseLatency || 0) * 1000;
+    const startPerfMs = performance.now() + lead * 1000 + latency;
     const voice = this.voice();
     let end = 0;
     steps.forEach((step, i) => {
       if (step.notes.length > 0) {
-        voice.triggerAttackRelease(step.notes.map(toNoteName), step.duration, start + step.at, step.velocity ?? 0.8);
+        if (step.instrument === 'click') {
+          this.getClicker().triggerAttackRelease(step.notes[0]! >= 90 ? 'G5' : 'C5', 0.05, start + step.at, step.velocity ?? 0.7);
+        } else {
+          voice.triggerAttackRelease(step.notes.map(toNoteName), step.duration, start + step.at, step.velocity ?? 0.8);
+        }
       }
       end = Math.max(end, step.at + step.duration);
-      if (onStep) this.later((step.at + 0.05) * 1000, generation, () => onStep(i));
+      if (onStep) this.later((step.at + lead) * 1000, generation, () => onStep(i));
     });
-    return new Promise((resolve) => this.later((end + 0.05) * 1000, generation, resolve, resolve));
+    const done = new Promise<void>((resolve) => this.later((end + lead) * 1000, generation, resolve, resolve));
+    return { startPerfMs, done };
   }
 
   /** Notes one after another, `gap` seconds apart. */

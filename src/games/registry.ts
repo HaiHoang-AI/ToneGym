@@ -1,6 +1,7 @@
 import { chordByNameQuestion, chordIdQuestion, inversionQuestion } from './defs/chords';
 import { compareQuestion, intervalQuestion } from './defs/intervals';
 import { progressionQuestion, scaleQuestion } from './defs/scalesProgressions';
+import { melodyCopyQuestion, melodyHuntQuestion, rhythmEchoQuestion, rhythmReadQuestion } from './defs/melodyRhythm';
 import type { GameDef } from './types';
 
 /**
@@ -66,21 +67,25 @@ export const GAMES: GameDef[] = [
     id: 'melody-hunt', skill: 'melody', phase: 3, art: { variant: 1, mark: 'up' },
     name: { vi: 'Săn giai điệu', en: 'Melody Hunt' },
     desc: { vi: 'Nghe giai điệu ngắn rồi dựng lại bằng các nốt cho sẵn.', en: 'Hear a short melody, rebuild it from the given notes.' },
+    makeQuestion: melodyHuntQuestion,
   },
   {
     id: 'melody-copy', skill: 'melody', phase: 3, art: { variant: 2, mark: 'up' },
     name: { vi: 'Chép giai điệu', en: 'Melody Copy' },
     desc: { vi: 'Nhớ giai điệu và chọn đúng từng cao độ theo thứ tự.', en: 'Memorise a melody and pick each pitch in order.' },
+    makeQuestion: melodyCopyQuestion,
   },
   {
     id: 'rhythm-echo', skill: 'rhythm', phase: 3, art: { variant: 1, mark: 'up' },
     name: { vi: 'Nhại tiết tấu', en: 'Rhythm Echo' },
     desc: { vi: 'Nghe tiết tấu rồi gõ lại bằng phím cách hoặc chạm màn hình.', en: 'Hear a rhythm, tap it back with Space or touch.' },
+    makeQuestion: rhythmEchoQuestion,
   },
   {
     id: 'rhythm-read', skill: 'rhythm', phase: 3, art: { variant: 3, mark: 'up' },
     name: { vi: 'Đọc tiết tấu', en: 'Rhythm Reading' },
     desc: { vi: 'Nhìn ký hiệu tiết tấu và gõ đúng nhịp sau phần đếm vào.', en: 'Read a rhythm and tap it in time after the count-in.' },
+    makeQuestion: rhythmReadQuestion,
   },
   {
     id: 'treble-reading', skill: 'reading', phase: 4, art: { variant: 0, mark: 'up' },

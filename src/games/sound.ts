@@ -1,3 +1,4 @@
+import type { RhythmPattern } from '../theory';
 import type { Sound } from './types';
 
 /** Notes one after another. */
@@ -28,6 +29,36 @@ export function concat(sounds: readonly Sound[], pause = 0.5): Sound {
     offset += end + pause;
   }
   return { steps };
+}
+
+/** Metronome clicks: `beats` ticks at `bpm`, accenting the first beat of each bar. */
+export function clicks(beats: number, bpm: number, beatsPerBar: number, startAt = 0): Sound {
+  const beat = 60 / bpm;
+  return {
+    steps: Array.from({ length: beats }, (_, i) => ({
+      notes: [i % beatsPerBar === 0 ? 96 : 84],
+      at: startAt + i * beat,
+      duration: 0.05,
+      instrument: 'click' as const,
+    })),
+  };
+}
+
+/** A rhythm played on one pitch. */
+export function rhythmSound(p: RhythmPattern, bpm: number, startAt = 0, pitch = 76): Sound {
+  const beat = 60 / bpm;
+  const steps: Sound['steps'] = [];
+  let t = 0;
+  for (const e of p.events) {
+    if (!e.rest) steps.push({ notes: [pitch], at: startAt + t * beat, duration: Math.max(0.12, e.dur * beat * 0.85) });
+    t += e.dur;
+  }
+  return { steps };
+}
+
+/** Merges sounds that share one timeline. */
+export function overlay(...sounds: Sound[]): Sound {
+  return { steps: sounds.flatMap((s) => s.steps).sort((a, b) => a.at - b.at) };
 }
 
 export function soundLength(s: Sound): number {

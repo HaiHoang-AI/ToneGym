@@ -27,6 +27,11 @@ export const SECTIONS: readonly Section[] = [
     description: { vi: 'Luyện tự do không giới hạn', en: 'Unlimited free practice' },
   },
   {
+    key: 'playground', path: '/playground', phase: 3, ready: true,
+    name: { vi: 'Playground', en: 'Playground' },
+    description: { vi: 'Chép giai điệu, đọc nốt', en: 'Melody dictation, sight-reading' },
+  },
+  {
     key: 'stats', path: '/stats', phase: 2, ready: true,
     name: { vi: 'Thống kê', en: 'Stats' },
     description: { vi: 'Ear Index, hạng, điểm mạnh/yếu', en: 'Ear Index, ranks, strengths' },

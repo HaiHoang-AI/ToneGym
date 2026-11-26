@@ -2,11 +2,12 @@ import {
   buildChord, buildScale, getChord, getInterval, getScale, parseProgression, pitchClass, realizeProgression,
   ROOTS, nameToMidi, type IntervalId, type Rng,
 } from '../theory';
-import { chordSequence, concat, harmonic, melodic } from '../games/sound';
+import { chordSequence, concat, harmonic, melodic, rhythmSound } from '../games/sound';
+import { generateRhythm, type RhythmDifficulty, type RhythmPattern } from '../theory';
 import type { Sound } from '../games/types';
 
-export type Topic = 'intervals' | 'chords' | 'scales' | 'progressions' | 'pitch';
-export type Mode = 'listen' | 'compare' | 'play';
+export type Topic = 'intervals' | 'chords' | 'scales' | 'progressions' | 'pitch' | 'rhythm';
+export type Mode = 'listen' | 'compare' | 'play' | 'tap';
 export type Direction = 'ascending' | 'descending' | 'harmonic' | 'mix';
 export type RootChoice = 'natural' | 'sharp' | 'flat' | 'fixed';
 export type Speed = 'slow' | 'moderate' | 'fast';
@@ -20,6 +21,8 @@ export interface ExerciseSettings {
   progressionKey: 'major' | 'minor';
   progressionLength: number;
   pitchDifficulty: 'easy' | 'medium' | 'hard';
+  rhythmBeats: number;
+  rhythmDifficulty: RhythmDifficulty;
   direction: Direction;
   root: RootChoice;
   speed: Speed;
@@ -31,7 +34,10 @@ export const MODES_BY_TOPIC: Record<Topic, Mode[]> = {
   scales: ['listen', 'play'],
   progressions: ['listen'],
   pitch: ['compare'],
+  rhythm: ['tap'],
 };
+
+export const RHYTHM_BPM: Record<Speed, number> = { slow: 70, moderate: 90, fast: 115 };
 
 export interface ExerciseQuestion {
   sound: Sound;
@@ -41,6 +47,8 @@ export interface ExerciseQuestion {
   answerId: string;
   /** Play mode: what the player must play, checked as pitch classes (in order for scales). */
   target?: { notes: number[]; ordered: boolean };
+  /** Rhythm exercises: the 2-bar pattern to read and tap. */
+  rhythm?: RhythmPattern;
 }
 
 const GAP: Record<Speed, number> = { slow: 0.9, moderate: 0.65, fast: 0.42 };
@@ -146,6 +154,10 @@ export function makeExercise(s: ExerciseSettings, rng: Rng): ExerciseQuestion {
         options: rng.shuffle([...ids]).map((p) => ({ id: p, label: p.split('-').join(' – '), sound: voice(p) })),
         answerId: answer,
       };
+    }
+    case 'rhythm': {
+      const pattern = generateRhythm(rng, s.rhythmDifficulty, s.rhythmBeats, 2);
+      return { sound: rhythmSound(pattern, RHYTHM_BPM[s.speed]), options: [], answerId: 'ok', rhythm: pattern };
     }
     case 'pitch': {
       const range = { easy: [3, 12], medium: [1, 3], hard: [1, 1] }[s.pitchDifficulty] as [number, number];

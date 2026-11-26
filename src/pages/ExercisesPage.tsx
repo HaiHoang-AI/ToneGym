@@ -3,9 +3,10 @@ import { audio } from '../audio/engine';
 import { useProfile } from '../app/ProfileContext';
 import { useL } from '../app/useL';
 import { PianoKeyboard, type KeyMark } from '../components/PianoKeyboard';
+import { RhythmInput } from '../components/RhythmInput';
 import { db } from '../db/schema';
 import {
-  checkPlayed, makeExercise, MODES_BY_TOPIC, type Direction, type ExerciseQuestion, type ExerciseSettings, type Mode,
+  checkPlayed, makeExercise, MODES_BY_TOPIC, RHYTHM_BPM, type Direction, type ExerciseQuestion, type ExerciseSettings, type Mode,
   type RootChoice, type Speed, type Topic,
 } from '../exercises/exercise';
 import { CHORD_ORDER } from '../games/defs/chords';
@@ -19,11 +20,13 @@ const TOPICS: { id: Topic; vi: string; en: string }[] = [
   { id: 'scales', vi: 'Âm giai', en: 'Scales' },
   { id: 'progressions', vi: 'Vòng hợp âm', en: 'Progressions' },
   { id: 'pitch', vi: 'Cao độ', en: 'Pitch' },
+  { id: 'rhythm', vi: 'Tiết tấu', en: 'Rhythm' },
 ];
 const MODE_NAMES: Record<Mode, [string, string]> = {
   listen: ['Nghe', 'Listen'],
   compare: ['So sánh', 'Compare'],
   play: ['Chơi trên piano', 'Play on piano'],
+  tap: ['Đọc và gõ', 'Read and tap'],
 };
 const GOAL = 10;
 
@@ -43,6 +46,8 @@ const DEFAULTS: ExerciseSettings = {
   progressionKey: 'major',
   progressionLength: 4,
   pitchDifficulty: 'medium',
+  rhythmBeats: 4,
+  rhythmDifficulty: 'easy',
   direction: 'ascending',
   root: 'natural',
   speed: 'moderate',
@@ -104,6 +109,7 @@ export function ExercisesPage() {
     setQ(question);
     setPicked(null);
     setPlayed([]);
+    if (s.topic === 'rhythm') return;
     if (s.mode === 'play' && question.given) {
       await play({ steps: [{ notes: question.given, at: 0, duration: 1 }] });
       await play(question.sound);
@@ -261,6 +267,24 @@ export function ExercisesPage() {
         </div>
       );
     }
+    if (s.topic === 'rhythm') {
+      return (
+        <div className="grid grid-cols-2 gap-4">
+          <label><span className="label">{l('Số chỉ nhịp', 'Time signature')}</span>
+            <select className="field" value={s.rhythmBeats} onChange={(e) => set({ rhythmBeats: Number(e.target.value) })}>
+              {[4, 3, 5].map((b) => <option key={b} value={b}>{b}/4</option>)}
+            </select>
+          </label>
+          <label><span className="label">{l('Độ khó', 'Difficulty')}</span>
+            <select className="field" value={s.rhythmDifficulty} onChange={(e) => set({ rhythmDifficulty: e.target.value as ExerciseSettings['rhythmDifficulty'] })}>
+              <option value="easy">{l('Dễ: đen, móc đơn', 'Easy: quarters, eighths')}</option>
+              <option value="medium">{l('Vừa: dấu lặng, nghịch phách', 'Medium: rests, syncopation')}</option>
+              <option value="hard">{l('Khó: chấm dôi, móc kép', 'Hard: dotted notes, sixteenths')}</option>
+            </select>
+          </label>
+        </div>
+      );
+    }
     return (
       <label><span className="label">{l('Độ khó', 'Difficulty')}</span>
         <select className="field" value={s.pitchDifficulty} onChange={(e) => set({ pitchDifficulty: e.target.value as ExerciseSettings['pitchDifficulty'] })}>
@@ -346,7 +370,9 @@ export function ExercisesPage() {
             <div>
               <div className="label !mb-0">{l(MODE_NAMES[s.mode][0], MODE_NAMES[s.mode][1])} · {l(TOPICS.find((t) => t.id === s.topic)!.vi, TOPICS.find((t) => t.id === s.topic)!.en).toLowerCase()}</div>
               <h1 className="h-display mt-1.5 text-[26px] font-bold">
-                {s.mode === 'play'
+                {s.mode === 'tap'
+                  ? l('Đọc tiết tấu, gõ đúng nhịp', 'Read the rhythm, tap it in time')
+                  : s.mode === 'play'
                   ? l('Nghe rồi chơi lại trên piano', 'Listen, then play it on the piano')
                   : s.mode === 'compare'
                     ? s.topic === 'pitch' ? l('Nốt nào cao hơn?', 'Which note is higher?') : l('Quãng nào rộng hơn?', 'Which interval is wider?')
@@ -369,7 +395,25 @@ export function ExercisesPage() {
             <button type="button" className={`btn ${answered ? 'btn-primary' : ''}`} onClick={() => void newQuestion()}>{l('Câu mới', 'New question')}</button>
           </div>
 
-          {q && s.mode !== 'play' && (
+          {q?.rhythm && (
+            <RhythmInput
+              key={JSON.stringify(q.rhythm)}
+              pattern={q.rhythm}
+              bpm={RHYTHM_BPM[s.speed]}
+              playFirst={false}
+              showNotation
+              toleranceMs={s.speed === 'fast' ? 90 : 120}
+              latencyMs={profile.settings.tapLatencyMs ?? 0}
+              theme={profile.settings.theme}
+              onDone={(g) => {
+                if (picked) return;
+                setPicked(g.passed ? 'ok' : '__wrong');
+                void record(g.passed, `${g.expected.filter((e) => e.hit).length}/${g.expected.length}`);
+              }}
+            />
+          )}
+
+          {q && !q.rhythm && s.mode !== 'play' && (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {q.options.map((o) => {
                 const style = answered

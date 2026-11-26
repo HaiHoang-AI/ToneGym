@@ -5,6 +5,9 @@ import { useProfile } from '../app/ProfileContext';
 import { useL } from '../app/useL';
 import { GameArt } from '../components/art/GameArt';
 import { Yumika } from '../components/art/Characters';
+import { NoteInput } from '../components/NoteInput';
+import { RhythmInput } from '../components/RhythmInput';
+import { melodic } from '../games/sound';
 import { getGame } from '../games/registry';
 import { CHANGE_LEVEL_FROM, HINTS_PER_LEVEL, LIVES_PER_LEVEL, STAGES_PER_LEVEL } from '../games/levels';
 import { answer, next, startSession, useHint, type SessionState } from '../games/session';
@@ -17,7 +20,7 @@ import type { GameProgress } from '../db/schema';
 declare global {
   interface Window {
     /** Exposed for automated tests only (see e2e/). */
-    __earlab?: { correctId?: string; phase?: string };
+    __earlab?: { correctId?: string; phase?: string; target?: number[]; answer?: (id: string) => void };
   }
 }
 
@@ -54,8 +57,12 @@ export function PlayPage() {
   const [session, setSession] = useState<SessionState | null>(null);
   const [workoutResult, setWorkoutResult] = useState<WorkoutCompletion | null>(null);
   const [deadline, setDeadline] = useState<number | null>(null);
+  /** What the player entered for a notes question (for compare). */
+  const [entered, setEntered] = useState<number[] | null>(null);
   const [now, setNow] = useState(Date.now());
   const saved = useRef(false);
+  /** True once the finished level (and workout progress) has been written. */
+  const [persisted, setPersisted] = useState(false);
 
   useEffect(() => {
     if (!game) return;
@@ -69,13 +76,20 @@ export function PlayPage() {
 
   // Expose the expected answer to the e2e tests.
   useEffect(() => {
-    window.__earlab = { correctId: q?.correctId, phase: session?.phase };
+    window.__earlab = {
+      correctId: q?.correctId,
+      phase: session?.phase,
+      target: q?.input?.kind === 'notes' ? q.input.target : undefined,
+      answer: (id: string) => setSession((s) => (s ? answer(s, id) : s)),
+    };
   }, [q, session?.phase]);
 
   // New question: play it and start the timer.
   useEffect(() => {
     if (!session || session.phase !== 'question') return;
-    void play(session.question.sound);
+    setEntered(null);
+    // Rhythm questions play inside their own input (count-in + recording).
+    if (session.question.input?.kind !== 'rhythm') void play(session.question.sound);
     setDeadline(session.question.timeLimitMs ? Date.now() + session.question.timeLimitMs : null);
   }, [session?.question]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -109,6 +123,7 @@ export function PlayPage() {
       });
       setProgress(p);
       if (inWorkout) setWorkoutResult(await completeWorkoutGame(profile.id!, game.id));
+      setPersisted(true);
     })();
   }, [session, game, profile.id, inWorkout]);
 
@@ -119,6 +134,7 @@ export function PlayPage() {
       if (!game) return;
       await audio.start();
       saved.current = false;
+      setPersisted(false);
       setWorkoutResult(null);
       setLevel(lv);
       setSession(startSession(game, lv, rng.current, ctx));
@@ -160,6 +176,8 @@ export function PlayPage() {
         return;
       }
       const s = session;
+      // Space taps rhythms and digits are not answers when the question has its own input.
+      if (s.question.input && s.phase === 'question' && (e.key === ' ' || /^[1-9]$/.test(e.key))) return;
       if (e.key === ' ') {
         e.preventDefault();
         void play(s.question.sound);
@@ -290,6 +308,15 @@ export function PlayPage() {
     );
   }
 
+  if ((session.phase === 'passed' || session.phase === 'failed') && !persisted) {
+    return (
+      <div className="flex min-h-screen flex-col bg-bg-deep">
+        {topBar}
+        <main className="grid flex-1 place-items-center text-muted" aria-live="polite">{l('Đang lưu kết quả…', 'Saving…')}</main>
+      </div>
+    );
+  }
+
   if (session.phase === 'passed' || session.phase === 'failed') {
     const passed = session.phase === 'passed';
     return (
@@ -325,7 +352,14 @@ export function PlayPage() {
 
   const answered = session.phase === 'answered';
   const picked = session.question.options.find((o) => o.id === session.picked);
-  const correctOpt = session.question.options.find((o) => o.id === session.question.correctId)!;
+  const correctOpt = session.question.options.find((o) => o.id === session.question.correctId) ?? {
+    id: 'ok',
+    label: session.question.input?.kind === 'notes'
+      ? l('giai điệu bên trên', 'the melody above')
+      : l('tiết tấu bên trên', 'the rhythm above'),
+    sound: session.question.input?.kind === 'notes' ? melodic(session.question.input.target, 0.6) : session.question.sound,
+  };
+  const yours = picked ?? (entered ? { id: 'wrong', label: l('của bạn', 'yours'), sound: melodic(entered, 0.6) } : undefined);
 
   return (
     <div className="flex min-h-screen flex-col bg-bg-deep">
@@ -362,6 +396,41 @@ export function PlayPage() {
             </div>
           )}
         </section>
+
+        {session.question.input?.kind === 'notes' && (
+          <section className="rounded-[20px] border border-line bg-surface p-5">
+            <NoteInput
+              length={session.question.input.target.length}
+              palette={session.question.input.palette}
+              style={session.question.input.style}
+              naming={profile.settings.noteNaming}
+              accidentals={profile.settings.accidentals}
+              reveal={answered ? session.question.input.target : undefined}
+              disabled={answered}
+              onDone={(notes) => {
+                setEntered(notes);
+                const target = (session.question.input as { target: number[] }).target;
+                choose(notes.every((n, i) => n === target[i]) ? 'ok' : 'wrong');
+              }}
+            />
+          </section>
+        )}
+        {session.question.input?.kind === 'rhythm' && (
+          <section className="rounded-[20px] border border-line bg-surface p-5">
+            <RhythmInput
+              key={session.stage + ':' + session.answered}
+              pattern={session.question.input.pattern}
+              bpm={session.question.input.bpm}
+              playFirst={session.question.input.playFirst}
+              showNotation={session.question.input.showNotation}
+              toleranceMs={session.question.input.toleranceMs}
+              latencyMs={profile.settings.tapLatencyMs ?? 0}
+              theme={profile.settings.theme}
+              disabled={answered}
+              onDone={(g) => choose(g.passed ? 'ok' : 'wrong')}
+            />
+          </section>
+        )}
 
         <section aria-label={l('Các phương án', 'Answers')} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {session.question.options.map((o, i) => {
@@ -411,7 +480,7 @@ export function PlayPage() {
               </div>
               <div className="mt-1 text-sm text-ink-2">{l('Chế độ so sánh: nghe lần lượt lựa chọn của bạn và đáp án để nhớ khác biệt.', 'Compare mode: hear your choice and the answer to learn the difference.')}</div>
             </div>
-            {picked?.sound && <button type="button" className="btn" onClick={() => void play(picked.sound)}>▶ {l('Bạn chọn', 'Yours')}: {picked.label}</button>}
+            {yours?.sound && <button type="button" className="btn" onClick={() => void play(yours.sound)}>▶ {l('Bạn chọn', 'Yours')}: {yours.label}</button>}
             {correctOpt.sound && <button type="button" className="btn !border-good" onClick={() => void play(correctOpt.sound)}>▶ {l('Đáp án', 'Answer')}: {correctOpt.label}</button>}
             <button type="button" className="btn btn-primary" onClick={goNext}>{l('Chặng tiếp', 'Next')} <span className="kbd">Enter</span></button>
           </section>
