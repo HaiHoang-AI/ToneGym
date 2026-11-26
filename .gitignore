@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+.vite/
+.claude/
+
+# Instrument samples are downloaded by `npm run setup` (see scripts/fetch-samples.mjs)
+public/samples/*
+!public/samples/ATTRIBUTION.md

@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0e1014;
+  --color-surface: #161a21;
+  --color-surface-2: #1e232c;
+  --color-line: #2a303c;
+  --color-ink: #e9ecf2;
+  --color-muted: #98a2b3;
+  --color-accent: #f4b740;
+  --color-accent-ink: #1a1405;
+  --color-teal: #39d0c0;
+  --color-good: #34d399;
+  --color-bad: #f87171;
+  --font-sans: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-line bg-surface-2 px-3.5 py-2 text-sm font-medium text-ink transition hover:border-accent/60 hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply border-accent bg-accent text-accent-ink hover:bg-accent/90 hover:border-accent;
+  }
+  .card {
+    @apply rounded-2xl border border-line bg-surface p-5;
+  }
+  .field {
+    @apply w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-accent;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted;
+  }
+}

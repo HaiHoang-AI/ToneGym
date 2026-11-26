@@ -1,0 +1,111 @@
+{
+  "app": {
+    "name": "EarLab",
+    "tagline": "An ear-training studio that runs on your own computer"
+  },
+  "nav": {
+    "home": "Home",
+    "workout": "Workout",
+    "games": "Games",
+    "exercises": "Exercises",
+    "tools": "Tools",
+    "learn": "Learn",
+    "stats": "Stats",
+    "sound": "Sound check",
+    "profiles": "Profiles & settings",
+    "menu": "Menu"
+  },
+  "common": {
+    "soon": "Coming soon",
+    "phase": "Phase {{n}}",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "rename": "Rename",
+    "create": "Create",
+    "active": "Active",
+    "use": "Use this profile",
+    "stop": "Stop",
+    "play": "Play"
+  },
+  "home": {
+    "greeting": "Hi {{name}}!",
+    "intro": "Train intervals, chords, scales, progressions, rhythm, melody, sight-reading and singing. Everything runs offline and every feature is unlocked.",
+    "soundCta": "Try the sound",
+    "roadmapTitle": "What's in the app",
+    "roadmapNote": "The app is built in phases. Finished parts open right away; the rest show which phase brings them."
+  },
+  "sections": {
+    "workout": {
+      "title": "Daily workout",
+      "body": "Five games a day picked from your weak spots, refreshed at 4 AM, with a daily streak and coins. Choose your own workout games."
+    },
+    "games": {
+      "title": "18 levelled games",
+      "body": "Intervals (harmonic, ascending, descending, comparison), chords, inversions, scales, progressions, melody, rhythm, treble/bass clef reading and singing games. Each level has 8 rounds, lives, hints and an answer-compare mode."
+    },
+    "exercises": {
+      "title": "Free practice",
+      "body": "Pick the intervals, chords, scales, progressions, pitches or rhythms you want and practise without limits. Listen, Compare, Play-on-piano and Read modes."
+    },
+    "tools": {
+      "title": "Theory tools",
+      "body": "Chord progression generator, circle of fifths, scale explorer, chord player, interval memorizer, piano recorder, vocal range test, perfect pitch test, vocal warm-ups and a tuner."
+    },
+    "learn": {
+      "title": "Theory course",
+      "body": "Seven units: Notes, Scales, Intervals, Chords, Progressions, Rhythm, Notation, with listening examples and quizzes."
+    },
+    "stats": {
+      "title": "Stats & ranks",
+      "body": "An Ear Index built from every game, Iron → Diamond ranks, strengths and weaknesses per skill, milestones and a leaderboard across the profiles on this computer."
+    },
+    "sound": {
+      "title": "Sound check",
+      "body": "Try the piano, intervals, chords, scales and progressions."
+    }
+  },
+  "sound": {
+    "title": "Sound check",
+    "intro": "Click the keys or use your computer keyboard (A W S E D F T G Y H U J K = C4 → C5, Z/X change octave). Hold Ctrl and click several keys, release Ctrl to play the chord. Hold Alt and move the mouse to sweep across keys.",
+    "status": {
+      "idle": "Audio is off — press any button to turn it on.",
+      "loading": "Loading the piano…",
+      "ready": "Sampled piano ready.",
+      "fallback": "No piano samples yet, using a synth. Run \"npm run setup\" to download the piano (≈2 MB)."
+    },
+    "demos": "Listen",
+    "interval": "Interval {{name}}",
+    "chord": "Chord {{name}}",
+    "scale": "Scale {{name}}",
+    "progression": "Progression {{name}}",
+    "octave": "Keyboard octave: {{n}}"
+  },
+  "profiles": {
+    "title": "Profiles & settings",
+    "listTitle": "Profiles on this computer",
+    "listNote": "Give each person a profile to keep their own progress. Data stays in this browser only.",
+    "newName": "New profile name",
+    "defaultName": "Me",
+    "confirmDelete": "Delete profile \"{{name}}\"? This cannot be undone.",
+    "settingsTitle": "Settings for {{name}}",
+    "language": "Language",
+    "volume": "Volume",
+    "instrument": "Instrument",
+    "instruments": { "piano": "Piano", "synth": "Soft synth" },
+    "noteNaming": "Note names",
+    "namings": { "letters": "C D E F G A B", "solfege": "Do Re Mi Fa Sol La Si" },
+    "accidentals": "Preferred accidentals",
+    "accidentalOptions": { "sharp": "Sharps (♯)", "flat": "Flats (♭)" },
+    "vocalRange": "Singing range (for the singing games)",
+    "vocalLow": "Lowest",
+    "vocalHigh": "Highest",
+    "tapLatency": "Tap latency compensation (ms)",
+    "saved": "Saved"
+  },
+  "comingSoon": {
+    "title": "{{section}} — coming soon",
+    "body": "This part arrives in phase {{n}}.",
+    "back": "Back to home"
+  }
+}

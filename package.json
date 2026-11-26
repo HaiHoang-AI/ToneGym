@@ -1,0 +1,40 @@
+{
+  "name": "earlab",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Local ear-training studio: intervals, chords, scales, progressions, rhythm, melody, sight-reading and singing drills.",
+  "scripts": {
+    "setup": "node scripts/fetch-samples.mjs",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "dexie": "^4.4.7",
+    "dexie-react-hooks": "^4.4.0",
+    "i18next": "^27.2.9",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-i18next": "^18.0.3",
+    "react-router-dom": "^7.18.7",
+    "tonal": "^6.12.0",
+    "tone": "^15.1.22",
+    "zustand": "^5.1.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/node": "^26.6.11",
+    "@types/react": "^19.3.3",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "fake-indexeddb": "^6.2.8",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.2"
+  }
+}
