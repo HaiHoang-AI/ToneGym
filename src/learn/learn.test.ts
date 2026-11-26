@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { createRng } from '../theory';
 import { getAnchor } from './anchors';
-import { generateLesson, GUIDED_COUNT, itemPc, lessonItems, TRAP_COUNT } from './generators';
+import { generateLesson, GUIDED_COUNT, itemPc, lessonItems, semitonesOf, TRAP_COUNT } from './generators';
+import { INTERVALS_PATH } from './paths/intervals';
 import { applySession, masteryNow, newMastery, pathMastery } from './mastery';
 import { PITCH_PATH } from './paths/pitch';
 import { computeStars, lessonsToSkip, pathStatuses } from './stars';
@@ -145,5 +146,58 @@ describe('mastery', () => {
     expect(masteryNow(m, 0)).toBe(1);
     expect(masteryNow(m, 37 * 86_400_000)).toBeCloseTo(0.5);
     expect(pathMastery(['C', 'D'], new Map([['C', m]]), 0)).toBe(0.5);
+  });
+});
+
+describe('intervals path', () => {
+  const lessons = INTERVALS_PATH.lessons;
+
+  it('has 42 items: intro, 33 lessons, 7 checkpoints, final', () => {
+    expect(lessons).toHaveLength(42);
+    expect(lessons.filter((x) => x.kind === 'lesson')).toHaveLength(33);
+    expect(lessons.filter((x) => x.kind === 'checkpoint')).toHaveLength(7);
+    expect(lessons.at(-1)!.kind).toBe('final');
+    expect(new Set(lessons.map((x) => x.id)).size).toBe(42);
+  });
+
+  it('every question plays the interval it names, in the lesson direction', () => {
+    const rng = createRng(5);
+    for (const lesson of lessons) {
+      const q = generateLesson(lesson, rng, 'intervals');
+      const all = [...q.tries, ...q.guided, ...q.main, ...q.traps];
+      expect(all.length).toBeGreaterThan(0);
+      for (const x of all) {
+        expect(lessonItems(lesson)).toContain(x.itemId);
+        expect(Math.abs(x.notes[1]! - x.notes[0]!)).toBe(semitonesOf(x.itemId));
+        if (x.stage !== 'trap') {
+          if (lesson.direction === 'up') expect(x.notes[1]! > x.notes[0]! && !x.harmonic).toBe(true);
+          if (lesson.direction === 'down') expect(x.notes[1]! < x.notes[0]!).toBe(true);
+        }
+        if (lesson.root !== undefined) expect(Math.min(...x.notes)).toBe(lesson.root);
+        if (lesson.resolve && ['TT', 'm7', 'P4', 'm2'].includes(x.itemId)) expect(x.tail).toBeDefined();
+      }
+      if (lesson.kind === 'lesson') expect(q.main).toHaveLength(20);
+    }
+  });
+
+  it('each anchor highlights the interval its lesson teaches', () => {
+    const expected: Record<string, number> = {
+      'iv-octave': 12, 'iv-twinkle-p5': 7, 'iv-bridal-p4': 5, 'iv-amazing-p4': 5, 'iv-auld-p4': 5, 'iv-adeste-p4d': -5, 'iv-twinkle-p5d': -7,
+      'iv-saints-m3': 4, 'iv-greensleeves-m3': 3, 'iv-brahms-m3': 3, 'iv-fifth-m3d': -4, 'iv-oldman-m3d': -3, 'iv-birthday-m2': 2, 'iv-frere-m2': 2,
+      'iv-ode-m2': 1, 'iv-mary-m2d': -2, 'iv-furelise-m2d': -1, 'iv-bonnie-m6': 9, 'iv-entertainer-m6': 8, 'iv-leading-m7': 11, 'iv-g7-m7': 10, 'iv-macabre-tt': 6,
+    };
+    for (const [id, semis] of Object.entries(expected)) {
+      const a = getAnchor(id);
+      const [i, j] = a.highlight;
+      expect(a.notes[j!]! - a.notes[i!]!, id).toBe(semis);
+      if (a.beats) expect(a.beats).toHaveLength(a.notes.length);
+    }
+    for (const l of lessons) for (const id of l.anchors) expect(() => getAnchor(id)).not.toThrow();
+  });
+
+  it('yes/no octave lesson ends with its closest decoy', () => {
+    const q = generateLesson(lessons[1]!, createRng(2), 'intervals');
+    expect(q.main.filter((x) => x.answerId === 'yes')).toHaveLength(10);
+    expect(q.main.filter((x) => x.answerId === 'no').at(-1)!.itemId).toBe('M7');
   });
 });

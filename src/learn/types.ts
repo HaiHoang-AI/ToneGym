@@ -6,7 +6,7 @@ export type PathId = 'pitch' | 'intervals' | 'chords' | 'scales' | 'progressions
 export type LessonKind = 'intro' | 'lesson' | 'checkpoint' | 'final';
 
 /** Where the question notes are played. */
-export type Register = 'mid' | 'low' | 'high' | 'any' | 'lowmid';
+export type Register = 'mid' | 'low' | 'high' | 'any' | 'lowmid' | 'wide';
 
 export const REGISTERS: Record<Register, { from: number; to: number }> = {
   mid: { from: 60, to: 71 }, // C4–B4
@@ -14,7 +14,11 @@ export const REGISTERS: Record<Register, { from: number; to: number }> = {
   high: { from: 72, to: 83 }, // C5–B5
   any: { from: 48, to: 83 }, // C3–B5
   lowmid: { from: 48, to: 71 }, // C3–B4
+  wide: { from: 48, to: 72 }, // C3–C5 (roots of intervals)
 };
+
+/** How an interval is played: up, down, both notes together; 'both' mixes up/down, 'all' all three. */
+export type Direction = 'up' | 'down' | 'harmonic' | 'both' | 'all';
 
 /** A sound demo inside a theory slide. */
 export interface SlideExample {
@@ -49,7 +53,7 @@ export interface AnchorSong {
 
 /** A trap question: one of two easily confused items, or "name the last note of a short run". */
 export type TrapSpec =
-  | { kind: 'pair'; a: string; b: string; register?: Register }
+  | { kind: 'pair'; a: string; b: string; register?: Register; direction?: Direction }
   | { kind: 'last'; register?: Register };
 
 export interface LessonDef {
@@ -70,6 +74,12 @@ export interface LessonDef {
   yesItem?: string;
   decoys?: string[];
   traps: TrapSpec[];
+  /** Intervals: how the two notes are played (default 'up'). */
+  direction?: Direction;
+  /** Intervals: fixed lower note instead of a random one in the register. */
+  root?: number;
+  /** Intervals: after the interval, play where it wants to resolve. */
+  resolve?: boolean;
   /** Graded questions (20 lessons, 30 checkpoints, 40 final, 5 untimed tries in the intro). */
   questionCount: number;
   timeLimitMs?: number;
@@ -93,8 +103,12 @@ export interface LearnQuestion {
   itemId: string;
   /** The right answer id ('yes' / 'no' in yes-no lessons, otherwise the item). */
   answerId: string;
-  /** Notes played one after another; the answer is the last one. */
+  /** Notes played one after another (pitch: the answer is the last one). */
   notes: number[];
+  /** Play `notes` together. */
+  harmonic?: boolean;
+  /** Notes played together after the question (resolution of an interval). */
+  tail?: number[];
 }
 
 /** Saved result of one lesson for one profile. */

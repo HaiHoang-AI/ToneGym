@@ -7,14 +7,14 @@ import { Teacher, Yumika } from '../../components/art/Characters';
 import { AnchorCard, playAnchor } from '../../components/learn/AnchorCard';
 import { StarRow } from '../../components/learn/StarRow';
 import { PianoKeyboard, type KeyMark } from '../../components/PianoKeyboard';
-import { concat, melodic } from '../../games/sound';
+import { melodic } from '../../games/sound';
 import { getAnchor } from '../../learn/anchors';
-import { generateLesson, itemLabel, itemPc, lessonItems, PITCH_ITEMS } from '../../learn/generators';
+import { compareSound, generateLesson, intervalSymbol, itemLabel, itemPc, lessonItems, PITCH_ITEMS, questionSound, sortItems } from '../../learn/generators';
 import { getPath } from '../../learn/paths';
 import { computeStars, isPassed, pathStatuses } from '../../learn/stars';
 import { saveLessonRun, togglePin, usePathProgress, type LessonOutcome } from '../../learn/store';
 import type { LearnQuestion, LessonDef, PathDef, QuestionStage, Slide } from '../../learn/types';
-import { createRng, displayNoteName, midiToName } from '../../theory';
+import { createRng, displayNoteName, getInterval, midiToName, type IntervalId } from '../../theory';
 
 declare global {
   interface Window {
@@ -53,7 +53,7 @@ function LessonRunner({ path, lesson, onRetry }: { path: PathDef; lesson: Lesson
   const profile = useProfile();
   const s = profile.settings;
   const progress = usePathProgress(profile.id, path.id);
-  const questions = useMemo(() => generateLesson(lesson, createRng(Date.now())), [lesson]);
+  const questions = useMemo(() => generateLesson(lesson, createRng(Date.now()), path.id), [lesson, path.id]);
   const phases = useMemo(() => phasesFor(lesson, questions.traps.length > 0), [lesson, questions]);
   const [phaseIndex, setPhaseIndex] = useState(0);
   const phase = phases[phaseIndex]!;
@@ -69,11 +69,15 @@ function LessonRunner({ path, lesson, onRetry }: { path: PathDef; lesson: Lesson
   const list: LearnQuestion[] = phase === 'try' ? questions.tries : phase === 'guided' ? questions.guided : phase === 'main' ? questions.main : phase === 'trap' ? questions.traps : [];
   const q = list[qIndex];
   const isYesNo = lesson.mode === 'yesno';
-  const items = useMemo(() => lessonItems(lesson), [lesson]);
-  const enabledKeys = useMemo(() => items.map((id) => 60 + itemPc(id)), [items]);
+  const isPitch = path.id === 'pitch';
+  const items = useMemo(() => sortItems(path.id, lessonItems(lesson)), [lesson, path.id]);
+  const enabledKeys = useMemo(() => (isPitch ? items.map((id) => 60 + itemPc(id)) : []), [items, isPitch]);
   const helped = phase === 'try' || phase === 'guided';
   const graded = phase === 'main' || phase === 'trap';
-  const name = useCallback((id: string) => displayNoteName(itemLabel(id), s.noteNaming), [s.noteNaming]);
+  const name = useCallback(
+    (id: string) => (isPitch ? displayNoteName(itemLabel(id), s.noteNaming) : `${intervalSymbol(id)} · ${l(getInterval(id as IntervalId).name)}`),
+    [s.noteNaming, isPitch, l],
+  );
 
   const next = () => {
     audio.stop();
@@ -86,7 +90,7 @@ function LessonRunner({ path, lesson, onRetry }: { path: PathDef; lesson: Lesson
     if (!x) return;
     await audio.start();
     audio.stop();
-    await audio.playSequence(melodic(x.notes, 0.6).steps);
+    await audio.playSequence(questionSound(x).steps);
   }, []);
 
   // Play every new question once.
@@ -108,23 +112,14 @@ function LessonRunner({ path, lesson, onRetry }: { path: PathDef; lesson: Lesson
 
   const compare = useCallback(
     async (x: LearnQuestion, chosen: string | null) => {
-      if (!s.learnCompare && s.learnCompare !== undefined) return;
-      const played = x.notes.at(-1)!;
-      const near = (id: string) => {
-        let m = played - (((played % 12) + 12) % 12) + itemPc(id);
-        if (m - played > 6) m -= 12;
-        if (played - m > 6) m += 12;
-        return m;
-      };
+      if (s.learnCompare === false) return;
+      const sound = compareSound(path.id, x, chosen, lesson.yesItem);
+      if (!sound) return;
       await audio.start();
       audio.stop();
-      if (isYesNo) {
-        await audio.playSequence(concat([melodic([played]), melodic([near(lesson.yesItem!)])], 0.4).steps);
-      } else if (chosen) {
-        await audio.playSequence(concat([melodic([near(chosen)]), melodic([played])], 0.4).steps);
-      }
+      await audio.playSequence(sound.steps);
     },
-    [s.learnCompare, isYesNo, lesson.yesItem],
+    [s.learnCompare, path.id, lesson.yesItem],
   );
 
   const answer = useCallback(
@@ -174,9 +169,29 @@ function LessonRunner({ path, lesson, onRetry }: { path: PathDef; lesson: Lesson
       phase,
       index: qIndex,
       answerId: q?.answerId,
-      key: q && !isYesNo ? midiToName(60 + itemPc(q.answerId), s.accidentals) : undefined,
+      key: q && !isYesNo && isPitch && s.learnPitchInput !== 'buttons' ? midiToName(60 + itemPc(q.answerId), s.accidentals) : undefined,
     };
-  }, [phase, qIndex, q, isYesNo, s.accidentals]);
+  }, [phase, qIndex, q, isYesNo, isPitch, s.accidentals, s.learnPitchInput]);
+
+  const questionText = () => {
+    if (!q) return '';
+    if (isYesNo) return l(`Có phải ${name(lesson.yesItem!)} không?`, `Is it ${name(lesson.yesItem!)}?`);
+    if (isPitch) return q.notes.length > 1 ? l('Nốt cuối cùng là nốt gì?', 'What is the last note?') : l('Nốt vừa nghe là nốt gì?', 'Which note was that?');
+    const how = q.harmonic ? l('vang cùng lúc', 'together') : q.notes[1]! < q.notes[0]! ? l('đi xuống', 'going down') : l('đi lên', 'going up');
+    return l(`Quãng gì? (${how})`, `Which interval? (${how})`);
+  };
+
+  // Number keys answer with the buttons.
+  useEffect(() => {
+    if (isPitch && !isYesNo && s.learnPitchInput !== 'buttons') return;
+    const onKey = (e: KeyboardEvent) => {
+      const n = Number(e.key);
+      const choices = isYesNo ? ['yes', 'no'] : items;
+      if (n >= 1 && n <= choices.length) answer(choices[n - 1]!);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isPitch, isYesNo, s.learnPitchInput, items, answer]);
 
   const index = path.lessons.indexOf(lesson);
   const nextLesson = path.lessons[index + 1];
@@ -222,7 +237,7 @@ function LessonRunner({ path, lesson, onRetry }: { path: PathDef; lesson: Lesson
             <div>
               <div className="text-xs font-bold uppercase tracking-wide" style={{ color: path.color }}>{stageLabel(phase, l)}</div>
               <div className="text-lg font-semibold">
-                {isYesNo ? l(`Có phải ${name(lesson.yesItem!)} không?`, `Is it ${name(lesson.yesItem!)}?`) : q.notes.length > 1 ? l('Nốt cuối cùng là nốt gì?', 'What is the last note?') : l('Nốt vừa nghe là nốt gì?', 'Which note was that?')}
+                {questionText()}
               </div>
             </div>
             <div className="text-sm font-semibold text-muted">{qIndex + 1} / {list.length}</div>
@@ -261,13 +276,18 @@ function LessonRunner({ path, lesson, onRetry }: { path: PathDef; lesson: Lesson
                 );
               })}
             </div>
-          ) : s.learnPitchInput === 'buttons' ? (
+          ) : !isPitch || s.learnPitchInput === 'buttons' ? (
             <div className="flex flex-wrap gap-2">
-              {PITCH_ITEMS.filter((id) => items.includes(id)).map((id) => {
+              {items.map((id, i) => {
                 const state = feedback ? (id === q.answerId ? 'border-good bg-good/15' : feedback.chosen === id ? 'border-bad bg-bad/15' : 'border-line') : wrongFlash === id ? 'border-bad bg-bad/15' : helped && id === q.answerId ? 'border-accent bg-accent/15' : 'border-line';
                 return (
-                  <button key={id} type="button" data-answer={id} className={`min-h-12 min-w-14 rounded-xl border-2 bg-surface-2 px-3 font-bold ${state}`} onClick={() => answer(id)}>
-                    {name(id)}
+                  <button key={id} type="button" data-answer={id} className={`min-h-12 min-w-14 rounded-xl border-2 bg-surface-2 px-3 py-1 font-bold ${state}`} onClick={() => answer(id)}>
+                    {isPitch ? name(id) : (
+                      <span className="flex flex-col items-center leading-tight">
+                        <span className="text-lg">{intervalSymbol(id)}</span>
+                        <span className="text-[11px] font-medium text-muted">{i + 1 <= 9 ? `${i + 1} · ` : ''}{l(getInterval(id as IntervalId).name)}</span>
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -299,6 +319,9 @@ function LessonRunner({ path, lesson, onRetry }: { path: PathDef; lesson: Lesson
               </span>
               <button type="button" className="btn btn-primary btn-sm" onClick={advance}>{l('Tiếp', 'Next')} →</button>
             </div>
+          )}
+          {feedback && !isPitch && (
+            <PianoKeyboard from={48} to={84} sound={false} labels="c" naming={s.noteNaming} accidentals={s.accidentals} marks={Object.fromEntries([...q.notes, ...(q.tail ?? [])].map((n) => [n, 'correct' as KeyMark]))} />
           )}
           {feedback?.ok && graded && <div className="font-semibold text-good-ink">✓ {l('Đúng!', 'Right!')}</div>}
           {helped && <p className="text-sm text-muted">{l('Đáp án đang sáng — nghe rồi bấm theo để làm quen.', 'The answer is lit — listen and press it to get used to the sound.')}</p>}
