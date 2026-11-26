@@ -6,7 +6,7 @@ export type PathId = 'pitch' | 'intervals' | 'chords' | 'scales' | 'progressions
 export type LessonKind = 'intro' | 'lesson' | 'checkpoint' | 'final';
 
 /** Where the question notes are played. */
-export type Register = 'mid' | 'low' | 'high' | 'any' | 'lowmid' | 'wide' | 'chord' | 'chordLow' | 'chordAny';
+export type Register = 'mid' | 'low' | 'high' | 'any' | 'lowmid' | 'wide' | 'chord' | 'chordLow' | 'chordAny' | 'scale' | 'scaleAny' | 'key' | 'keyAny';
 
 export const REGISTERS: Record<Register, { from: number; to: number }> = {
   mid: { from: 60, to: 71 }, // C4–B4
@@ -18,6 +18,10 @@ export const REGISTERS: Record<Register, { from: number; to: number }> = {
   chord: { from: 48, to: 55 }, // chord roots C3–G3
   chordLow: { from: 36, to: 43 }, // chord roots C2–G2
   chordAny: { from: 36, to: 60 }, // chord roots C2–C4
+  scale: { from: 57, to: 63 }, // scale roots C4 ± 3
+  scaleAny: { from: 48, to: 64 }, // scale roots C3–E4
+  key: { from: 60, to: 60 }, // progressions in C
+  keyAny: { from: 55, to: 66 }, // progressions in any key
 };
 
 /** How an interval is played: up, down, both notes together; 'both' mixes up/down, 'all' all three. */
@@ -29,6 +33,8 @@ export interface SlideExample {
   notes: number[];
   /** Notes together instead of one after another. */
   together?: boolean;
+  /** Block chords one after another (then `notes` is ignored). */
+  chords?: number[][];
 }
 
 export interface Slide {
@@ -114,6 +120,12 @@ export interface LearnQuestion {
   harmonic?: boolean;
   /** Notes played together after the question (resolution of an interval). */
   tail?: number[];
+  /** Seconds between the notes (default 0.6). */
+  gap?: number;
+  /** Progressions: the chords, one after another. */
+  chords?: number[][];
+  /** Scale root or key tonic. */
+  root?: number;
 }
 
 /** Saved result of one lesson for one profile. */
