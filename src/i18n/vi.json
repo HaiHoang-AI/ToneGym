@@ -1,0 +1,111 @@
+{
+  "app": {
+    "name": "EarLab",
+    "tagline": "Phòng luyện tai chạy ngay trên máy bạn"
+  },
+  "nav": {
+    "home": "Trang chủ",
+    "workout": "Workout",
+    "games": "Game",
+    "exercises": "Bài tập",
+    "tools": "Công cụ",
+    "learn": "Học",
+    "stats": "Thống kê",
+    "sound": "Kiểm tra âm thanh",
+    "profiles": "Hồ sơ & cài đặt",
+    "menu": "Menu"
+  },
+  "common": {
+    "soon": "Sắp có",
+    "phase": "Giai đoạn {{n}}",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "delete": "Xóa",
+    "rename": "Đổi tên",
+    "create": "Tạo",
+    "active": "Đang dùng",
+    "use": "Dùng hồ sơ này",
+    "stop": "Dừng",
+    "play": "Phát"
+  },
+  "home": {
+    "greeting": "Chào {{name}}!",
+    "intro": "Luyện quãng, hợp âm, âm giai, vòng hợp âm, tiết tấu, giai điệu, đọc nốt và hát. Mọi thứ chạy offline, mọi tính năng đều mở sẵn.",
+    "soundCta": "Thử âm thanh",
+    "roadmapTitle": "Các phần của app",
+    "roadmapNote": "App được làm theo từng giai đoạn. Phần đã xong mở được ngay; phần còn lại ghi rõ giai đoạn sẽ có."
+  },
+  "sections": {
+    "workout": {
+      "title": "Workout hằng ngày",
+      "body": "Mỗi ngày 5 game chọn theo điểm yếu của bạn, đổi bài lúc 4h sáng, có chuỗi ngày luyện và nhận xu. Tự chọn game cho workout."
+    },
+    "games": {
+      "title": "18 game có level",
+      "body": "Quãng (hòa âm, đi lên, đi xuống, so quãng), hợp âm, thế đảo, âm giai, vòng hợp âm, giai điệu, tiết tấu, đọc khóa Sol/Fa và các game hát. Mỗi level 8 chặng, có mạng, phao gợi ý và chế độ so sánh đáp án."
+    },
+    "exercises": {
+      "title": "Bài tập tự do",
+      "body": "Tự chọn quãng, hợp âm, âm giai, vòng hợp âm, cao độ, tiết tấu để luyện không giới hạn. Chế độ Nghe, So sánh, Chơi trên piano và Đọc nốt."
+    },
+    "tools": {
+      "title": "Công cụ nhạc lý",
+      "body": "Tạo vòng hợp âm, vòng quãng năm, tra âm giai, chơi hợp âm, ghi nhớ quãng, piano ghi âm, đo tầm giọng, kiểm tra cao độ tuyệt đối, khởi động giọng, máy lên dây."
+    },
+    "learn": {
+      "title": "Khóa nhạc lý",
+      "body": "7 chương: Nốt, Âm giai, Quãng, Hợp âm, Vòng hợp âm, Tiết tấu, Ký âm. Có ví dụ nghe và câu hỏi kiểm tra."
+    },
+    "stats": {
+      "title": "Thống kê & hạng",
+      "body": "Ear Index tổng hợp từ mọi game, hạng Sắt → Kim cương, điểm mạnh/yếu theo kỹ năng, mốc tiến bộ, bảng xếp hạng giữa các hồ sơ trên máy."
+    },
+    "sound": {
+      "title": "Kiểm tra âm thanh",
+      "body": "Nghe thử piano, quãng, hợp âm, âm giai và vòng hợp âm."
+    }
+  },
+  "sound": {
+    "title": "Kiểm tra âm thanh",
+    "intro": "Bấm phím đàn hoặc dùng bàn phím máy tính (A W S E D F T G Y H U J K = C4 → C5, Z/X đổi quãng tám). Giữ Ctrl rồi click nhiều phím, thả Ctrl để phát hợp âm. Giữ Alt và rê chuột để quét phím.",
+    "status": {
+      "idle": "Âm thanh chưa bật — bấm bất kỳ nút nào để bật.",
+      "loading": "Đang tải piano…",
+      "ready": "Piano mẫu đã sẵn sàng.",
+      "fallback": "Chưa có mẫu piano, đang dùng tiếng synth. Chạy \"npm run setup\" để tải piano (≈2 MB)."
+    },
+    "demos": "Nghe thử",
+    "interval": "Quãng {{name}}",
+    "chord": "Hợp âm {{name}}",
+    "scale": "Âm giai {{name}}",
+    "progression": "Vòng {{name}}",
+    "octave": "Quãng tám bàn phím: {{n}}"
+  },
+  "profiles": {
+    "title": "Hồ sơ & cài đặt",
+    "listTitle": "Hồ sơ trên máy này",
+    "listNote": "Mỗi người dùng một hồ sơ để lưu tiến độ riêng. Dữ liệu chỉ nằm trong trình duyệt này.",
+    "newName": "Tên hồ sơ mới",
+    "defaultName": "Tôi",
+    "confirmDelete": "Xóa hồ sơ \"{{name}}\"? Không khôi phục được.",
+    "settingsTitle": "Cài đặt của {{name}}",
+    "language": "Ngôn ngữ",
+    "volume": "Âm lượng",
+    "instrument": "Nhạc cụ",
+    "instruments": { "piano": "Piano", "synth": "Synth nhẹ" },
+    "noteNaming": "Tên nốt",
+    "namings": { "letters": "C D E F G A B", "solfege": "Do Re Mi Fa Sol La Si" },
+    "accidentals": "Dấu hóa ưu tiên",
+    "accidentalOptions": { "sharp": "Thăng (♯)", "flat": "Giáng (♭)" },
+    "vocalRange": "Tầm giọng hát (cho các game hát)",
+    "vocalLow": "Thấp nhất",
+    "vocalHigh": "Cao nhất",
+    "tapLatency": "Bù độ trễ khi gõ nhịp (ms)",
+    "saved": "Đã lưu"
+  },
+  "comingSoon": {
+    "title": "{{section}} — sắp có",
+    "body": "Phần này sẽ có ở giai đoạn {{n}}.",
+    "back": "Về trang chủ"
+  }
+}
