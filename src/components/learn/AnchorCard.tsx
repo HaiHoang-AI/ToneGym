@@ -10,7 +10,8 @@ export function anchorSteps(a: AnchorSong, slow = false): SequenceStep[] {
   let t = 0;
   return a.notes.map((n, i) => {
     const len = (a.beats?.[i] ?? 1) * beat;
-    const step = { notes: [n], at: t, duration: len * 0.95 };
+    const chord = a.harmony?.[i];
+    const step = { notes: chord ? [n, ...chord] : [n], at: t, duration: (chord ? 2 : 1) * len * 0.95 };
     t += len;
     return step;
   });
