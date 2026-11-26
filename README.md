@@ -38,7 +38,7 @@ Nếu chưa chạy `npm run setup`, app vẫn chạy nhưng dùng tiếng synth 
 | 1 | Nền móng: module nhạc lý, bộ máy âm thanh, piano trên màn hình, hồ sơ, cài đặt, song ngữ Việt/Anh | ✅ |
 | 2 | 9 game nghe (quãng, hợp âm, thế đảo, âm giai, vòng hợp âm), bài tập tự do, workout hằng ngày, Ear Index, hạng, xu, thống kê, giao diện sáng/tối, Yumika và thầy nhạc | ✅ |
 | 3 | Tiết tấu và giai điệu: 4 game, bài tập tiết tấu, đo độ trễ gõ nhịp, Playground chép giai điệu | ✅ |
-| 4 | Đọc nốt khóa Sol/Fa, chế độ Đọc, playground đọc nốt | ⏳ |
+| 4 | Đọc nốt: 2 game khóa Sol/Fa, chế độ Đọc trong bài tập, Playground đọc nốt (khóa Sol/Đô/Fa) | ✅ |
 | 5 | Game hát (micro), đo tầm giọng, cao độ tuyệt đối, luyện xướng âm, khởi động giọng, máy lên dây | ⏳ |
 | 6 | Công cụ nhạc lý còn lại và bàn phím MIDI | ⏳ |
 | 7 | Khóa nhạc lý, thi tuần, giải thưởng, cửa hàng nhạc cụ, chạy offline (PWA), sao lưu | ⏳ |

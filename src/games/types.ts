@@ -63,6 +63,8 @@ export interface Question {
    * grades the player's notes or taps and answers 'ok' or 'wrong'.
    */
   input?: NotesInput | RhythmInput;
+  /** Notation to read (sight-reading games). */
+  staff?: { clef: 'treble' | 'bass' | 'alto'; stacks: string[][] };
 }
 
 export interface NotesInput {

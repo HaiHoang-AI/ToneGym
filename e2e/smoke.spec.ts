@@ -110,12 +110,41 @@ test('rhythm reading: tapping on the beat passes, tapping off it fails', async (
 test('melody playground and rhythm exercise render', async ({ page }) => {
   const errors = collectErrors(page);
   await page.goto('/playground');
-  await page.getByRole('link', { name: 'Vào luyện' }).click();
+  await page.getByRole('link', { name: 'Vào luyện' }).first().click();
   await page.getByRole('button', { name: 'Bắt đầu' }).click();
   await expect(page.getByLabel('Các nốt đã nhập')).toBeVisible();
   await page.goto('/exercises');
   await page.getByRole('tab', { name: 'Tiết tấu' }).click();
   await page.getByRole('button', { name: /Bắt đầu$/ }).first().click();
   await expect(page.locator('[aria-label="Rhythm notation"] svg')).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('treble reading: notation renders and answering clears a level', async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.goto('/play/treble-reading');
+  await page.getByRole('button', { name: /Bắt đầu level/ }).click();
+  for (let i = 0; i < 8; i++) {
+    await page.waitForFunction(() => window.__earlab?.phase === 'question');
+    await expect(page.locator('[data-staff] svg')).toBeVisible();
+    const id = await page.evaluate(() => window.__earlab!.correctId!);
+    await page.locator(`[data-option="${id}"]`).click();
+    await page.getByRole('button', { name: /Chặng tiếp/ }).click();
+  }
+  await expect(page.getByText('Qua level 1!')).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('sight-reading playground and read-mode exercises render notation', async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.goto('/playground/sight-reading');
+  await page.getByRole('button', { name: 'Bắt đầu' }).click();
+  await expect(page.locator('[data-staff] svg')).toBeVisible();
+  await page.getByRole('button', { name: 'Khóa Fa' }).click();
+  await expect(page.locator('[data-staff] svg')).toBeVisible();
+  await page.goto('/exercises');
+  await page.getByRole('button', { name: 'Đọc nốt' }).click();
+  await page.getByRole('button', { name: /Bắt đầu$/ }).first().click();
+  await expect(page.locator('[data-staff] svg')).toBeVisible();
   expect(errors).toEqual([]);
 });

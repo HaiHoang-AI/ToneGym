@@ -3,11 +3,14 @@ import {
   ROOTS, nameToMidi, type IntervalId, type Rng,
 } from '../theory';
 import { chordSequence, concat, harmonic, melodic, rhythmSound } from '../games/sound';
-import { generateRhythm, type RhythmDifficulty, type RhythmPattern } from '../theory';
+import {
+  generateRhythm, midiToName, spellChord, spellInterval, spellScale, nameMidi, pcOf,
+  type RhythmDifficulty, type RhythmPattern,
+} from '../theory';
 import type { Sound } from '../games/types';
 
 export type Topic = 'intervals' | 'chords' | 'scales' | 'progressions' | 'pitch' | 'rhythm';
-export type Mode = 'listen' | 'compare' | 'play' | 'tap';
+export type Mode = 'listen' | 'compare' | 'play' | 'tap' | 'read';
 export type Direction = 'ascending' | 'descending' | 'harmonic' | 'mix';
 export type RootChoice = 'natural' | 'sharp' | 'flat' | 'fixed';
 export type Speed = 'slow' | 'moderate' | 'fast';
@@ -29,11 +32,11 @@ export interface ExerciseSettings {
 }
 
 export const MODES_BY_TOPIC: Record<Topic, Mode[]> = {
-  intervals: ['listen', 'compare', 'play'],
-  chords: ['listen', 'play'],
-  scales: ['listen', 'play'],
+  intervals: ['listen', 'compare', 'play', 'read'],
+  chords: ['listen', 'play', 'read'],
+  scales: ['listen', 'play', 'read'],
   progressions: ['listen'],
-  pitch: ['compare'],
+  pitch: ['compare', 'read'],
   rhythm: ['tap'],
 };
 
@@ -47,6 +50,8 @@ export interface ExerciseQuestion {
   answerId: string;
   /** Play mode: what the player must play, checked as pitch classes (in order for scales). */
   target?: { notes: number[]; ordered: boolean };
+  /** Read mode: notation to read. */
+  staff?: { clef: 'treble' | 'bass' | 'alto'; stacks: string[][] };
   /** Rhythm exercises: the 2-bar pattern to read and tap. */
   rhythm?: RhythmPattern;
 }
@@ -76,8 +81,69 @@ const DIATONIC: Record<'major' | 'minor', string[]> = {
   minor: ['i', 'iv', 'v', 'V', 'bVI', 'bVII', 'bIII'],
 };
 
+/** Spelled root name in octave 4 for read mode, honouring the root setting. */
+function readRoot(choice: RootChoice, rng: Rng): string {
+  if (choice === 'fixed') return 'C4';
+  return `${rng.pick(ROOTS[choice].filter((r) => !['E#', 'B#', 'Cb', 'Fb'].includes(r)))}4`;
+}
+
+function readExercise(s: ExerciseSettings, rng: Rng): ExerciseQuestion {
+  const gap = GAP[s.speed];
+  if (s.topic === 'intervals') {
+    const simple = s.intervals.filter((i) => getInterval(i).semitones <= 12 && i !== 'P1');
+    const pool = simple.length >= 2 ? simple : (['M3', 'P5'] as IntervalId[]);
+    const id = rng.pick(pool);
+    const root = readRoot(s.root, rng);
+    const top = spellInterval(root, id);
+    return {
+      sound: melodic([nameMidi(root), nameMidi(top)], gap),
+      staff: { clef: 'treble', stacks: rng.next() < 0.5 ? [[root, top]] : [[root], [top]] },
+      options: pool.map((x) => ({ id: x, label: x })),
+      answerId: id,
+    };
+  }
+  if (s.topic === 'chords') {
+    const pool = s.chords.filter((c) => getChord(c).formula.length <= 4);
+    const ids = pool.length >= 2 ? pool : ['maj', 'min'];
+    const id = rng.pick(ids);
+    const root = readRoot(s.root, rng).replace('4', '3');
+    const names = spellChord(root, getChord(id));
+    return {
+      sound: harmonic(names.map(nameMidi), 1.6),
+      staff: { clef: 'treble', stacks: [names] },
+      options: ids.map((c) => ({ id: c, label: `${pcOf(root)}${getChord(c).symbol}` })),
+      answerId: id,
+    };
+  }
+  if (s.topic === 'scales') {
+    const id = rng.pick(s.scales.length ? s.scales : ['major']);
+    const root = readRoot(s.root, rng);
+    const names = spellScale(root, id, getScale(id).formula);
+    return {
+      sound: melodic(names.map(nameMidi), gap * 0.55),
+      staff: { clef: 'treble', stacks: names.map((n) => [n]) },
+      options: s.scales.map((x) => ({ id: x, label: x })),
+      answerId: id,
+    };
+  }
+  // Pitch: one note, name it.
+  const midi = rng.int(60, 79);
+  const name = midiToName(midi, s.root === 'flat' ? 'flat' : 'sharp');
+  const letters = s.root === 'natural' || s.root === 'fixed'
+    ? ['C', 'D', 'E', 'F', 'G', 'A', 'B']
+    : ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'].map((n) => (s.root === 'flat' ? midiToName(nameMidi(`${n}4`), 'flat', false) : n));
+  const natural = s.root === 'natural' || s.root === 'fixed' ? `${'CDEFGAB'[rng.int(0, 6)]}${rng.int(4, 5)}` : name;
+  return {
+    sound: melodic([nameMidi(natural)], 1),
+    staff: { clef: 'treble', stacks: [[natural]] },
+    options: letters.map((l) => ({ id: l, label: l })),
+    answerId: pcOf(natural),
+  };
+}
+
 export function makeExercise(s: ExerciseSettings, rng: Rng): ExerciseQuestion {
   const gap = GAP[s.speed];
+  if (s.mode === 'read') return readExercise(s, rng);
   switch (s.topic) {
     case 'intervals': {
       if (s.mode === 'compare') {
