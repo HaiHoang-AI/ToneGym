@@ -9,12 +9,12 @@ import { StarRow } from '../../components/learn/StarRow';
 import { PianoKeyboard, type KeyMark } from '../../components/PianoKeyboard';
 import { melodic } from '../../games/sound';
 import { getAnchor } from '../../learn/anchors';
-import { compareSound, generateLesson, intervalSymbol, itemLabel, itemPc, lessonItems, PITCH_ITEMS, questionSound, sortItems } from '../../learn/generators';
+import { compareSound, generateLesson, itemLabel, itemName, itemSymbol, itemPc, lessonItems, PITCH_ITEMS, questionSound, sortItems } from '../../learn/generators';
 import { getPath } from '../../learn/paths';
 import { computeStars, isPassed, pathStatuses } from '../../learn/stars';
 import { saveLessonRun, togglePin, usePathProgress, type LessonOutcome } from '../../learn/store';
 import type { LearnQuestion, LessonDef, PathDef, QuestionStage, Slide } from '../../learn/types';
-import { createRng, displayNoteName, getInterval, midiToName, type IntervalId } from '../../theory';
+import { createRng, displayNoteName, midiToName } from '../../theory';
 
 declare global {
   interface Window {
@@ -75,8 +75,8 @@ function LessonRunner({ path, lesson, onRetry }: { path: PathDef; lesson: Lesson
   const helped = phase === 'try' || phase === 'guided';
   const graded = phase === 'main' || phase === 'trap';
   const name = useCallback(
-    (id: string) => (isPitch ? displayNoteName(itemLabel(id), s.noteNaming) : `${intervalSymbol(id)} · ${l(getInterval(id as IntervalId).name)}`),
-    [s.noteNaming, isPitch, l],
+    (id: string) => (isPitch ? displayNoteName(itemLabel(id), s.noteNaming) : `${itemSymbol(path.id, id)} · ${l(itemName(path.id, id) ?? id)}`),
+    [s.noteNaming, isPitch, l, path.id],
   );
 
   const next = () => {
@@ -177,6 +177,7 @@ function LessonRunner({ path, lesson, onRetry }: { path: PathDef; lesson: Lesson
     if (!q) return '';
     if (isYesNo) return l(`Có phải ${name(lesson.yesItem!)} không?`, `Is it ${name(lesson.yesItem!)}?`);
     if (isPitch) return q.notes.length > 1 ? l('Nốt cuối cùng là nốt gì?', 'What is the last note?') : l('Nốt vừa nghe là nốt gì?', 'Which note was that?');
+    if (path.id === 'chords') return l('Hợp âm gì?', 'Which chord?');
     const how = q.harmonic ? l('vang cùng lúc', 'together') : q.notes[1]! < q.notes[0]! ? l('đi xuống', 'going down') : l('đi lên', 'going up');
     return l(`Quãng gì? (${how})`, `Which interval? (${how})`);
   };
@@ -284,8 +285,8 @@ function LessonRunner({ path, lesson, onRetry }: { path: PathDef; lesson: Lesson
                   <button key={id} type="button" data-answer={id} className={`min-h-12 min-w-14 rounded-xl border-2 bg-surface-2 px-3 py-1 font-bold ${state}`} onClick={() => answer(id)}>
                     {isPitch ? name(id) : (
                       <span className="flex flex-col items-center leading-tight">
-                        <span className="text-lg">{intervalSymbol(id)}</span>
-                        <span className="text-[11px] font-medium text-muted">{i + 1 <= 9 ? `${i + 1} · ` : ''}{l(getInterval(id as IntervalId).name)}</span>
+                        <span className="text-lg">{itemSymbol(path.id, id)}</span>
+                        <span className="text-[11px] font-medium text-muted">{i + 1 <= 9 ? `${i + 1} · ` : ''}{l(itemName(path.id, id) ?? id)}</span>
                       </span>
                     )}
                   </button>
@@ -321,7 +322,7 @@ function LessonRunner({ path, lesson, onRetry }: { path: PathDef; lesson: Lesson
             </div>
           )}
           {feedback && !isPitch && (
-            <PianoKeyboard from={48} to={84} sound={false} labels="c" naming={s.noteNaming} accidentals={s.accidentals} marks={Object.fromEntries([...q.notes, ...(q.tail ?? [])].map((n) => [n, 'correct' as KeyMark]))} />
+            <PianoKeyboard from={36} to={84} sound={false} labels="c" naming={s.noteNaming} accidentals={s.accidentals} marks={Object.fromEntries([...q.notes, ...(q.tail ?? [])].map((n) => [n, 'correct' as KeyMark]))} />
           )}
           {feedback?.ok && graded && <div className="font-semibold text-good-ink">✓ {l('Đúng!', 'Right!')}</div>}
           {helped && <p className="text-sm text-muted">{l('Đáp án đang sáng — nghe rồi bấm theo để làm quen.', 'The answer is lit — listen and press it to get used to the sound.')}</p>}

@@ -1,6 +1,6 @@
 import type { Sound } from '../games/types';
 import { concat, harmonic, melodic } from '../games/sound';
-import { getInterval, type IntervalId, type Rng } from '../theory';
+import { chordNotes, getChord, getInterval, type Bilingual, type IntervalId, type Rng } from '../theory';
 import { REGISTERS, type Direction, type LearnQuestion, type LessonDef, type PathId, type QuestionStage, type Register, type TrapSpec } from './types';
 
 /** The twelve pitch items of the Pitch path, by pitch class. */
@@ -8,6 +8,25 @@ export const PITCH_ITEMS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A'
 
 /** The twelve interval items of the Intervals path, smallest first ('TT' = augmented fourth). */
 export const INTERVAL_ITEMS: readonly IntervalId[] = ['m2', 'M2', 'm3', 'M3', 'P4', 'TT', 'P5', 'm6', 'M6', 'm7', 'M7', 'P8'];
+
+/** Chord qualities of the Chords path ('sus4' only appears as a trap). */
+export const CHORD_ITEMS = ['maj', 'min', 'dim', 'aug', 'sus4', 'maj7', 'dom7', 'min7', 'm7b5', 'dim7'] as const;
+
+const CHORD_SYMBOLS: Record<string, string> = { maj: 'M', min: 'm', dim: '°', aug: '+', sus4: 'sus4', maj7: 'maj7', dom7: '7', min7: 'm7', m7b5: 'ø7', dim7: '°7' };
+
+/** Big label of an answer button. */
+export function itemSymbol(pathId: PathId, id: string): string {
+  if (pathId === 'intervals') return intervalSymbol(id);
+  if (pathId === 'chords') return CHORD_SYMBOLS[id] ?? id;
+  return itemLabel(id);
+}
+
+/** Full name of an item, if it has one (intervals, chords). */
+export function itemName(pathId: PathId, id: string): Bilingual | undefined {
+  if (pathId === 'intervals') return getInterval(id as IntervalId).name;
+  if (pathId === 'chords') return getChord(id).name;
+  return undefined;
+}
 
 export function itemPc(id: string): number {
   const pc = (PITCH_ITEMS as readonly string[]).indexOf(id);
@@ -65,7 +84,7 @@ export function lessonItems(lesson: LessonDef): string[] {
 
 /** Answer buttons in a stable order (pitch class / interval size). */
 export function sortItems(pathId: PathId, items: readonly string[]): string[] {
-  const order: readonly string[] = pathId === 'intervals' ? INTERVAL_ITEMS : PITCH_ITEMS;
+  const order: readonly string[] = pathId === 'intervals' ? INTERVAL_ITEMS : pathId === 'chords' ? CHORD_ITEMS : PITCH_ITEMS;
   return [...items].sort((a, b) => order.indexOf(a) - order.indexOf(b));
 }
 
@@ -94,6 +113,11 @@ interface Ctx {
 /** Notes of one question for an item. */
 function build(pathId: PathId, lesson: LessonDef, stage: QuestionStage, itemId: string, rng: Rng, ctx: Ctx): LearnQuestion {
   const answerId = lesson.mode === 'yesno' ? (itemId === lesson.yesItem ? 'yes' : 'no') : itemId;
+  if (pathId === 'chords') {
+    const { from, to } = REGISTERS[ctx.register];
+    const root = lesson.root ?? rng.int(from, to);
+    return { stage, itemId, answerId, notes: chordNotes(root, getChord(itemId)), harmonic: true };
+  }
   if (pathId === 'intervals') {
     const s = semitonesOf(itemId);
     const { from, to } = REGISTERS[ctx.register];
@@ -168,6 +192,12 @@ export function questionSound(q: LearnQuestion): Sound {
 
 /** After a wrong answer: the player's answer, then the right one, from the same starting note. */
 export function compareSound(pathId: PathId, q: LearnQuestion, chosen: string | null, yesItem?: string): Sound | undefined {
+  if (pathId === 'chords') {
+    const root = Math.min(...q.notes);
+    const as = (id: string) => harmonic(chordNotes(root, getChord(id)), 1.3);
+    if (chosen === 'yes' || chosen === 'no') return concat([questionSound(q), as(yesItem!)], 0.5);
+    return chosen ? concat([as(chosen), as(q.itemId)], 0.5) : undefined;
+  }
   if (pathId === 'intervals') {
     const low = Math.min(...q.notes);
     const as = (id: string): Sound => (q.harmonic ? harmonic([low, low + semitonesOf(id)], 1.2) : melodic([low, low + semitonesOf(id)], 0.55));

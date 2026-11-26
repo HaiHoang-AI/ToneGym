@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { createRng } from '../theory';
+import { createRng, getChord } from '../theory';
 import { getAnchor } from './anchors';
 import { generateLesson, GUIDED_COUNT, itemPc, lessonItems, semitonesOf, TRAP_COUNT } from './generators';
+import { CHORDS_PATH } from './paths/chords';
 import { INTERVALS_PATH } from './paths/intervals';
 import { applySession, masteryNow, newMastery, pathMastery } from './mastery';
 import { PITCH_PATH } from './paths/pitch';
@@ -199,5 +200,46 @@ describe('intervals path', () => {
     const q = generateLesson(lessons[1]!, createRng(2), 'intervals');
     expect(q.main.filter((x) => x.answerId === 'yes')).toHaveLength(10);
     expect(q.main.filter((x) => x.answerId === 'no').at(-1)!.itemId).toBe('M7');
+  });
+});
+
+describe('chords path', () => {
+  const lessons = CHORDS_PATH.lessons;
+
+  it('has 26 items: intro, 19 lessons, 5 checkpoints, final', () => {
+    expect(lessons).toHaveLength(26);
+    expect(lessons.filter((x) => x.kind === 'lesson')).toHaveLength(19);
+    expect(lessons.filter((x) => x.kind === 'checkpoint')).toHaveLength(5);
+    expect(lessons.at(-1)!.kind).toBe('final');
+  });
+
+  it('every question plays the chord it names, in the lesson register', () => {
+    const rng = createRng(9);
+    for (const lesson of lessons) {
+      const q = generateLesson(lesson, rng, 'chords');
+      for (const x of [...q.tries, ...q.guided, ...q.main, ...q.traps]) {
+        expect(lessonItems(lesson)).toContain(x.itemId);
+        expect(x.harmonic).toBe(true);
+        const root = x.notes[0]!;
+        expect(x.notes.map((n) => n - root)).toEqual([...getChord(x.itemId).formula]);
+        if (x.stage === 'main') {
+          const r = REGISTERS[lesson.register];
+          expect(root).toBeGreaterThanOrEqual(r.from);
+          expect(root).toBeLessThanOrEqual(r.to);
+        }
+      }
+      for (const id of lesson.anchors) expect(() => getAnchor(id)).not.toThrow();
+    }
+  });
+
+  it('chord anchors line up their accompaniment with the melody', () => {
+    for (const id of ['ch-ode-maj', 'ch-greensleeves-min', 'ch-maj-min', 'ch-dim', 'ch-aug', 'ch-cmaj7', 'ch-blues-i7', 'ch-am7', 'ch-ii-minor', 'ch-toccata']) {
+      const a = getAnchor(id);
+      if (a.harmony) expect(a.harmony, id).toHaveLength(a.notes.length);
+      if (a.beats) expect(a.beats, id).toHaveLength(a.notes.length);
+    }
+    // The Toccata chord is a diminished seventh.
+    const t = getAnchor('ch-toccata').harmony!.at(-1)!;
+    expect(t.map((n) => n - t[0]!)).toEqual([0, 3, 6, 9]);
   });
 });

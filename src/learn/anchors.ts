@@ -115,7 +115,36 @@ export const INTERVAL_ANCHORS: readonly AnchorSong[] = [
   { id: 'iv-resolve', title: { vi: 'Quãng căng và nơi nó về', en: 'Tense intervals and where they go' }, source: DEMO_SRC, notes: [65, 71, 64, 72, 55, 65, 60, 64], highlight: [0, 1, 4, 5] },
 ];
 
-const BY_ID = new Map([...ANCHORS, ...INTERVAL_ANCHORS].map((a) => [a.id, a]));
+const C3 = [48, 52, 55];
+const G2 = [43, 47, 50];
+const AM2 = [45, 48, 52];
+
+export const CHORD_ANCHORS: readonly AnchorSong[] = [
+  {
+    id: 'ch-ode-maj', title: { vi: 'Ode to Joy đệm Đô và Sol trưởng', en: 'Ode to Joy over C and G major' }, source: ODE_SRC,
+    notes: ODE, beats: ODE_BEATS, highlight: [0, 4, 8, 12],
+    harmony: ODE.map((_, i) => (i === 0 || i === 8 ? C3 : i === 4 || i === 12 ? G2 : null)),
+  },
+  {
+    id: 'ch-greensleeves-min', title: { vi: 'Greensleeves đệm La thứ', en: 'Greensleeves over A minor' }, source: PD('Dân ca Anh thế kỷ 16', '16th-century English folk song'),
+    notes: GREENSLEEVES, beats: GREENSLEEVES_BEATS, highlight: [1, 11],
+    harmony: GREENSLEEVES.map((_, i) => (i === 1 || i === 11 ? AM2 : i === 6 ? G2 : null)),
+  },
+  { id: 'ch-maj-min', title: { vi: 'Đô trưởng rồi Đô thứ', en: 'C major, then C minor' }, source: DEMO_SRC, notes: [60, 64, 67, 60, 63, 67], beats: [1, 1, 2, 1, 1, 2], highlight: [1, 4], harmony: [null, null, [48, 52, 55], null, null, [48, 51, 55]] },
+  { id: 'ch-dim', title: { vi: 'Hợp âm giảm "phim câm"', en: 'The "silent film" diminished chord' }, source: DEMO_SRC, notes: [59, 62, 65, 59, 62, 65, 60], beats: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 2], highlight: [0, 1, 2], harmony: [[47, 50, 53], null, null, [47, 50, 53], null, null, [48, 52, 55]] },
+  { id: 'ch-aug', title: { vi: 'Âm giai toàn cung (kiểu Debussy)', en: 'Whole-tone scale (Debussy style)' }, source: DEMO_SRC, notes: [60, 62, 64, 66, 68, 70, 72], highlight: [0, 2, 4], harmony: [null, null, null, null, [48, 52, 56], null, [48, 52, 56]] },
+  { id: 'ch-cmaj7', title: { vi: 'Đô bảy trưởng rải', en: 'Cmaj7 arpeggio' }, source: DEMO_SRC, notes: [60, 64, 67, 71, 67, 64, 60], highlight: [3], harmony: [null, null, null, [48, 52, 55, 59], null, null, null] },
+  { id: 'ch-blues-i7', title: { vi: 'Đô 7 kiểu blues', en: 'Bluesy C7' }, source: DEMO_SRC, notes: [60, 64, 67, 70, 69, 67, 64], highlight: [3], harmony: [[48, 52, 55, 58], null, null, null, null, [48, 52, 55, 58], null] },
+  { id: 'ch-am7', title: { vi: 'La bảy thứ rải', en: 'Am7 arpeggio' }, source: DEMO_SRC, notes: [57, 60, 64, 67, 64, 60, 57], highlight: [3], harmony: [null, null, null, [45, 48, 52, 55], null, null, null] },
+  { id: 'ch-ii-minor', title: { vi: 'Rê nửa giảm → Sol 7 → Đô thứ', en: 'Dø7 → G7 → C minor' }, source: DEMO_SRC, notes: [62, 65, 68, 72, 71, 67, 63], beats: [1, 1, 1, 1, 1, 1, 2], highlight: [0, 1, 2, 3], harmony: [[50, 53, 56, 60], null, null, null, [43, 47, 50, 53], null, [48, 51, 55]] },
+  {
+    id: 'ch-toccata', title: { vi: 'Toccata và Fugue cung Rê thứ (Bach)', en: 'Toccata and Fugue in D minor (Bach)' }, source: PD('J. S. Bach, BWV 565', 'J. S. Bach, BWV 565'),
+    notes: [81, 79, 81, 79, 77, 76, 74, 73, 74, 61], beats: [0.25, 0.25, 1.5, 0.25, 0.25, 0.25, 0.25, 0.5, 1.5, 3], highlight: [9],
+    harmony: [null, null, null, null, null, null, null, null, null, [64, 67, 70, 73]],
+  },
+];
+
+const BY_ID = new Map([...ANCHORS, ...INTERVAL_ANCHORS, ...CHORD_ANCHORS].map((a) => [a.id, a]));
 
 export function getAnchor(id: string): AnchorSong {
   const a = BY_ID.get(id);

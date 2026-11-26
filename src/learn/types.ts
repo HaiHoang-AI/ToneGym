@@ -6,7 +6,7 @@ export type PathId = 'pitch' | 'intervals' | 'chords' | 'scales' | 'progressions
 export type LessonKind = 'intro' | 'lesson' | 'checkpoint' | 'final';
 
 /** Where the question notes are played. */
-export type Register = 'mid' | 'low' | 'high' | 'any' | 'lowmid' | 'wide';
+export type Register = 'mid' | 'low' | 'high' | 'any' | 'lowmid' | 'wide' | 'chord' | 'chordLow' | 'chordAny';
 
 export const REGISTERS: Record<Register, { from: number; to: number }> = {
   mid: { from: 60, to: 71 }, // C4–B4
@@ -15,6 +15,9 @@ export const REGISTERS: Record<Register, { from: number; to: number }> = {
   any: { from: 48, to: 83 }, // C3–B5
   lowmid: { from: 48, to: 71 }, // C3–B4
   wide: { from: 48, to: 72 }, // C3–C5 (roots of intervals)
+  chord: { from: 48, to: 55 }, // chord roots C3–G3
+  chordLow: { from: 36, to: 43 }, // chord roots C2–G2
+  chordAny: { from: 36, to: 60 }, // chord roots C2–C4
 };
 
 /** How an interval is played: up, down, both notes together; 'both' mixes up/down, 'all' all three. */
@@ -49,6 +52,8 @@ export interface AnchorSong {
   highlight: number[];
   /** Beats per minute at normal speed. */
   bpm?: number;
+  /** Accompaniment: chord notes sounding with the melody note of the same index. */
+  harmony?: (number[] | null)[];
 }
 
 /** A trap question: one of two easily confused items, or "name the last note of a short run". */
