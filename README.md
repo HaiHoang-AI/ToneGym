@@ -25,6 +25,8 @@ Nếu chưa chạy `npm run setup`, app vẫn chạy nhưng dùng tiếng synth 
 | Lệnh | Việc |
 |---|---|
 | `npm test` | Chạy unit test (Vitest) |
+| `npm run e2e:install` | Cài Chromium cho test giao diện vào `D:\ms-playwright` (một lần) |
+| `npm run e2e` | Chạy test giao diện (Playwright) |
 | `npm run typecheck` | Kiểm tra kiểu TypeScript |
 | `npm run build` | Build bản production vào `dist/` |
 | `npm run preview` | Chạy thử bản build |
@@ -34,12 +36,12 @@ Nếu chưa chạy `npm run setup`, app vẫn chạy nhưng dùng tiếng synth 
 | Giai đoạn | Nội dung | Trạng thái |
 |---|---|---|
 | 1 | Nền móng: module nhạc lý, bộ máy âm thanh, piano trên màn hình, hồ sơ, cài đặt, song ngữ Việt/Anh | ✅ |
-| 2 | 9 game nghe (quãng, hợp âm, thế đảo, âm giai, vòng hợp âm), bài tập tự do, workout hằng ngày, Ear Index, hạng, xu, thống kê | ⏳ |
-| 3 | Tiết tấu và giai điệu: 4 game, bài tập tiết tấu, playground giai điệu | ⏳ |
-| 4 | Đọc nốt khóa Sol/Fa, chế độ Đọc, playground đọc nốt | ⏳ |
-| 5 | Game hát (micro), đo tầm giọng, cao độ tuyệt đối, luyện xướng âm, khởi động giọng, máy lên dây | ⏳ |
-| 6 | Công cụ nhạc lý còn lại và bàn phím MIDI | ⏳ |
-| 7 | Khóa nhạc lý, thi tuần, giải thưởng, cửa hàng nhạc cụ, chạy offline (PWA), sao lưu | ⏳ |
+| 2 | 9 game nghe (quãng, hợp âm, thế đảo, âm giai, vòng hợp âm), bài tập tự do, workout hằng ngày, Ear Index, hạng, xu, thống kê, giao diện sáng/tối, Yumika và thầy nhạc | ✅ |
+| 3 | Tiết tấu và giai điệu: 4 game, bài tập tiết tấu, đo độ trễ gõ nhịp, Playground chép giai điệu | ✅ |
+| 4 | Đọc nốt: 2 game khóa Sol/Fa, chế độ Đọc trong bài tập, Playground đọc nốt (khóa Sol/Đô/Fa) | ✅ |
+| 5 | 3 game hát (micro), trang Công cụ: máy lên dây, đo tầm giọng, cao độ tuyệt đối, luyện xướng âm, khởi động giọng | ✅ |
+| 6 | 7 công cụ nhạc lý (vòng hợp âm, vòng quãng năm, âm giai, hợp âm, ghi nhớ quãng, piano ghi âm + xuất MIDI, metronome) và bàn phím MIDI | ✅ |
+| 7 | Khóa nhạc lý 7 chương (21 bài), thử thách tuần 60 giây, giải thưởng + chứng chỉ in được, cửa hàng nhạc cụ, chạy offline (PWA), sao lưu/khôi phục | ✅ |
 
 ## Cấu trúc mã
 

@@ -9,3 +9,7 @@ coverage/
 # Instrument samples are downloaded by `npm run setup` (see scripts/fetch-samples.mjs)
 public/samples/*
 !public/samples/ATTRIBUTION.md
+
+# Playwright output
+test-results/
+playwright-report/

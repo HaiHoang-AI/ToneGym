@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent } from 'react';
 import { audio } from '../audio/engine';
+import { midi } from '../audio/midi';
 import { displayNoteName, isBlackKey, midiToName, pitchClass, type NoteNaming } from '../theory';
 
 export type KeyMark = 'active' | 'correct' | 'wrong' | 'hint' | 'selected';
@@ -76,6 +77,27 @@ export function PianoKeyboard({
     selectionRef.current = next;
     setSelection(next);
   };
+
+  // MIDI keyboard: every note strikes; notes pressed together (within 120 ms) also form a chord.
+  const midiChord = useRef<{ notes: number[]; timer: number | null }>({ notes: [], timer: null });
+  useEffect(
+    () =>
+      midi.onNote((note, velocity, on) => {
+        if (!on) return;
+        flash(note);
+        onNote?.(note);
+        if (sound) void audio.start().then(() => audio.playNotes([note], 1.2, 0, Math.max(0.3, velocity)));
+        const c = midiChord.current;
+        c.notes.push(note);
+        if (c.timer) window.clearTimeout(c.timer);
+        c.timer = window.setTimeout(() => {
+          if (c.notes.length > 1) onChord?.([...c.notes].sort((a, b) => a - b));
+          c.notes = [];
+          c.timer = null;
+        }, 120);
+      }),
+    [flash, onNote, onChord, sound],
+  );
 
   useEffect(() => {
     const onKeyUp = async (e: KeyboardEvent) => {
