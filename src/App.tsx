@@ -19,11 +19,14 @@ import { SightSingingTool, WarmupTool } from './pages/tools/SingingTools';
 import { ChordTool, CircleTool, ProgressionTool, ScaleTool } from './pages/tools/TheoryTools';
 import { IntervalMemorizerTool, MetronomeTool, PianoRecorderTool } from './pages/tools/PracticeTools';
 import { LearnPage, LessonPage } from './pages/LearnPage';
+import { LearnHub } from './pages/learn/LearnHub';
+import { PathPage } from './pages/learn/PathPage';
+import { LessonRoute } from './pages/learn/LessonRunner';
 import { ContestPage } from './pages/ContestPage';
 import { AwardsPage, ShopPage } from './pages/ShopAwardsPages';
 
 /** Highest build phase merged into this app (gates "coming soon" items). */
-export const SHIPPED_PHASE = 7;
+export const SHIPPED_PHASE = 8;
 
 export default function App() {
   return (
@@ -52,8 +55,11 @@ export default function App() {
             <Route path="tools/interval-memorizer" element={<IntervalMemorizerTool />} />
             <Route path="tools/piano" element={<PianoRecorderTool />} />
             <Route path="tools/metronome" element={<MetronomeTool />} />
-            <Route path="learn" element={<LearnPage />} />
-            <Route path="learn/:lessonId" element={<LessonPage />} />
+            <Route path="learn" element={<LearnHub />} />
+            <Route path="learn/theory" element={<LearnPage />} />
+            <Route path="learn/theory/:lessonId" element={<LessonPage />} />
+            <Route path="learn/:pathId" element={<PathPage />} />
+            <Route path="learn/:pathId/:lessonId" element={<LessonRoute />} />
             <Route path="contest" element={<ContestPage />} />
             <Route path="shop" element={<ShopPage />} />
             <Route path="awards" element={<AwardsPage />} />

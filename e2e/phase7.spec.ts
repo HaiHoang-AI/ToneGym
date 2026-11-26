@@ -24,14 +24,14 @@ async function seedCoins(page: Page, coins: number) {
 
 test('course: a lesson quiz passed gives learning points and marks progress', async ({ page }) => {
   const errors = collectErrors(page);
-  await page.goto('/learn');
+  await page.goto('/learn/theory');
   await expect(page.getByRole('heading', { name: 'Học cùng thầy nhạc' })).toBeVisible();
   await page.getByRole('link', { name: 'Bảy tên nốt và quãng tám' }).click();
   await page.getByRole('button', { name: 'C', exact: true }).click();
   await page.getByRole('button', { name: 'cao hơn một quãng tám' }).click();
   await page.getByRole('button', { name: 'Kiểm tra' }).click();
   await expect(page.getByText(/Đúng hết! \+100 điểm học tập/)).toBeVisible();
-  await page.goto('/learn');
+  await page.goto('/learn/theory');
   await expect(page.getByText('Đã xong 1/21 bài')).toBeVisible();
   expect(errors).toEqual([]);
 });

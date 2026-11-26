@@ -19,6 +19,8 @@ export interface PianoKeyboardProps {
   labels?: 'c' | 'all' | 'none';
   naming?: NoteNaming;
   accidentals?: 'sharp' | 'flat';
+  /** Only these keys can be played; the others are greyed out. */
+  enabled?: readonly number[];
 }
 
 const MARK_CLASSES: Record<KeyMark, { white: string; black: string }> = {
@@ -43,7 +45,9 @@ export function PianoKeyboard({
   labels = 'c',
   naming = 'letters',
   accidentals = 'sharp',
+  enabled,
 }: PianoKeyboardProps) {
+  const isOff = (midi: number) => !!enabled && !enabled.includes(midi);
   const [pressed, setPressed] = useState<Record<number, true>>({});
   const [selection, setSelection] = useState<number[]>([]);
   const selectionRef = useRef<number[]>([]);
@@ -130,6 +134,7 @@ export function PianoKeyboard({
 
   const handleDown = (midi: number, e: PointerEvent) => {
     e.preventDefault();
+    if (isOff(midi)) return;
     pointerDown.current = true;
     if (e.ctrlKey || e.metaKey) {
       const current = selectionRef.current;
@@ -143,7 +148,7 @@ export function PianoKeyboard({
 
   const handleEnter = (midi: number, e: PointerEvent) => {
     const sweeping = e.altKey || (pointerDown.current && e.buttons === 1 && !e.ctrlKey && !e.metaKey);
-    if (!sweeping || lastSwept.current === midi) return;
+    if (!sweeping || lastSwept.current === midi || isOff(midi)) return;
     lastSwept.current = midi;
     void strike(midi);
   };
@@ -172,10 +177,11 @@ export function PianoKeyboard({
               key={midi}
               type="button"
               aria-label={midiToName(midi, accidentals)}
+              disabled={isOff(midi)}
               onPointerDown={(e) => handleDown(midi, e)}
               onPointerEnter={(e) => handleEnter(midi, e)}
               className={`relative flex flex-1 items-end justify-center rounded-b-md border border-line pb-2 text-[10px] font-medium text-slate-500 transition-colors ${
-                mark ? MARK_CLASSES[mark].white : 'bg-[#f3f1ea] hover:bg-white'
+                mark ? MARK_CLASSES[mark].white : isOff(midi) ? 'bg-[#9c9a94] opacity-60' : 'bg-[#f3f1ea] hover:bg-white'
               }`}
             >
               {label(midi)}
@@ -191,11 +197,12 @@ export function PianoKeyboard({
             key={midi}
             type="button"
             aria-label={midiToName(midi, accidentals)}
+            disabled={isOff(midi)}
             onPointerDown={(e) => handleDown(midi, e)}
             onPointerEnter={(e) => handleEnter(midi, e)}
             style={{ left: `${whiteIndex * whiteWidth - whiteWidth * 0.3}%`, width: `${whiteWidth * 0.6}%` }}
             className={`absolute top-0 z-10 h-[62%] rounded-b-md border border-black/60 transition-colors ${
-              mark ? MARK_CLASSES[mark].black : 'bg-[#1b1d22] hover:bg-[#2b2f37]'
+              mark ? MARK_CLASSES[mark].black : isOff(midi) ? 'bg-[#4a4c52] opacity-60' : 'bg-[#1b1d22] hover:bg-[#2b2f37]'
             }`}
           >
             {labels === 'all' && (
