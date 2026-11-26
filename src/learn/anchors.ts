@@ -61,7 +61,61 @@ export const ANCHORS: readonly AnchorSong[] = [
   { id: 'tritone-fb', title: { vi: 'Fa – Si: quãng "ma quỷ"', en: 'F – B: the "devil" interval' }, source: { vi: 'Như dây vĩ cầm lên lệch trong Danse Macabre (Saint-Saëns, 1874) — hết bản quyền', en: 'Like the retuned violin of Danse Macabre (Saint-Saëns, 1874) — public domain' }, notes: [65, 71, 65, 71], beats: [1, 1, 1, 2], highlight: [0, 1, 2, 3] },
 ];
 
-const BY_ID = new Map(ANCHORS.map((a) => [a.id, a]));
+
+const BRIDAL = [60, 65, 65, 65, 60, 67, 64, 65];
+const BRIDAL_BEATS = [1, 0.75, 0.25, 2, 1, 0.75, 0.25, 2];
+const AMAZING = [55, 60, 64, 60, 64, 62, 60, 57, 55];
+const AMAZING_BEATS = [1, 2, 0.5, 0.5, 2, 1, 2, 1, 2];
+const ADESTE = [72, 72, 67, 72, 74, 67];
+const ADESTE_BEATS = [1, 2, 1, 1, 2, 2];
+const GREENSLEEVES = [57, 60, 62, 64, 65, 64, 62, 59, 55, 57, 59, 60, 57];
+const GREENSLEEVES_BEATS = [1, 2, 1, 1.5, 0.5, 1, 2, 1, 1.5, 0.5, 1, 2, 1];
+const BRAHMS = [64, 64, 67, 64, 64, 67, 64, 67, 72, 71, 69, 69, 67];
+const BRAHMS_BEATS = [0.5, 0.5, 2, 0.5, 0.5, 2, 0.5, 0.5, 1, 1.5, 0.5, 1, 1];
+const FIFTH = [67, 67, 67, 63, 65, 65, 65, 62];
+const FIFTH_BEATS = [0.5, 0.5, 0.5, 2.5, 0.5, 0.5, 0.5, 2.5];
+const OLDMAN = [67, 64, 67, 67, 64, 67, 69, 67, 65, 64, 62, 64, 65];
+const OLDMAN_BEATS = [1, 1, 2, 1, 1, 2, 1, 1, 1, 1, 0.5, 0.5, 1];
+const MARY = [64, 62, 60, 62, 64, 64, 64];
+const MARY_BEATS = [1, 1, 1, 1, 1, 1, 2];
+const FURELISE = [76, 75, 76, 75, 76, 71, 74, 72, 69];
+const FURELISE_BEATS = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 1.5];
+const BONNIE = [67, 76, 74, 72, 74, 72, 69, 67, 64];
+const BONNIE_BEATS = [1, 1.5, 0.5, 1, 1, 1, 1, 1, 3];
+const ENTERTAINER = [62, 63, 64, 72, 64, 72, 64, 72];
+const ENTERTAINER_BEATS = [0.5, 0.5, 0.5, 1, 0.5, 1, 0.5, 2.5];
+
+const PD = (vi: string, en: string) => ({ vi: `${vi} — hết bản quyền`, en: `${en} — public domain` });
+
+export const INTERVAL_ANCHORS: readonly AnchorSong[] = [
+  { id: 'iv-octave', title: { vi: 'Cùng giai điệu, cách một quãng tám', en: 'The same tune an octave apart' }, source: { vi: 'Như giọng nam và giọng nữ hát cùng nhau', en: 'Like a man and a woman singing together' }, notes: [60, 72, 62, 74, 64, 76, 60, 72], highlight: [0, 1] },
+  { id: 'iv-twinkle-p5', title: { vi: 'Twinkle Twinkle Little Star', en: 'Twinkle Twinkle Little Star' }, source: TWINKLE_SRC, notes: TWINKLE.slice(0, 7), beats: TWINKLE_BEATS.slice(0, 7), highlight: [1, 2] },
+  { id: 'iv-bridal-p4', title: { vi: 'Hành khúc cưới (Wagner)', en: 'Bridal Chorus (Wagner)' }, source: PD('Wagner, Lohengrin (1850)', 'Wagner, Lohengrin (1850)'), notes: BRIDAL, beats: BRIDAL_BEATS, highlight: [0, 1] },
+  { id: 'iv-amazing-p4', title: { vi: 'Amazing Grace', en: 'Amazing Grace' }, source: PD('Thánh ca Mỹ thế kỷ 19', '19th-century American hymn'), notes: AMAZING, beats: AMAZING_BEATS, highlight: [0, 1] },
+  { id: 'iv-auld-p4', title: { vi: 'Auld Lang Syne', en: 'Auld Lang Syne' }, source: AULD_SRC, notes: AULD, beats: AULD_BEATS, highlight: [0, 1] },
+  { id: 'iv-adeste-p4d', title: { vi: 'O Come, All Ye Faithful', en: 'O Come, All Ye Faithful' }, source: PD('Thánh ca thế kỷ 18', '18th-century hymn'), notes: ADESTE, beats: ADESTE_BEATS, highlight: [1, 2] },
+  { id: 'iv-twinkle-p5d', title: { vi: 'Twinkle đảo chiều', en: 'Twinkle turned around' }, source: DEMO_SRC, notes: [67, 67, 60, 60], beats: [1, 1, 1, 2], highlight: [1, 2] },
+  { id: 'iv-saints-m3', title: { vi: 'When the Saints Go Marching In', en: 'When the Saints Go Marching In' }, source: SAINTS_SRC, notes: SAINTS, beats: SAINTS_BEATS, highlight: [0, 1] },
+  { id: 'iv-greensleeves-m3', title: { vi: 'Greensleeves', en: 'Greensleeves' }, source: PD('Dân ca Anh thế kỷ 16', '16th-century English folk song'), notes: GREENSLEEVES, beats: GREENSLEEVES_BEATS, highlight: [0, 1] },
+  { id: 'iv-brahms-m3', title: { vi: 'Khúc hát ru (Brahms)', en: 'Lullaby (Brahms)' }, source: PD('Brahms, Wiegenlied (1868)', 'Brahms, Wiegenlied (1868)'), notes: BRAHMS, beats: BRAHMS_BEATS, highlight: [1, 2] },
+  { id: 'iv-major-arp', title: { vi: 'Hợp âm Đô trưởng rải', en: 'C major arpeggio' }, source: DEMO_SRC, notes: [60, 64, 67, 64, 60], highlight: [0, 1, 2] },
+  { id: 'iv-minor-arp', title: { vi: 'Hợp âm La thứ rải', en: 'A minor arpeggio' }, source: DEMO_SRC, notes: [57, 60, 64, 60, 57], highlight: [0, 1, 2] },
+  { id: 'iv-fifth-m3d', title: { vi: 'Giao hưởng số 5 (Beethoven)', en: 'Symphony No. 5 (Beethoven)' }, source: PD('Beethoven (1808)', 'Beethoven (1808)'), notes: FIFTH, beats: FIFTH_BEATS, highlight: [2, 3] },
+  { id: 'iv-oldman-m3d', title: { vi: 'This Old Man', en: 'This Old Man' }, source: PD('Đồng dao Anh', 'English nursery rhyme'), notes: OLDMAN, beats: OLDMAN_BEATS, highlight: [0, 1] },
+  { id: 'iv-birthday-m2', title: { vi: 'Happy Birthday', en: 'Happy Birthday' }, source: BIRTHDAY_SRC, notes: BIRTHDAY, beats: BIRTHDAY_BEATS, highlight: [1, 2] },
+  { id: 'iv-frere-m2', title: { vi: 'Frère Jacques', en: 'Frère Jacques' }, source: FRERE_SRC, notes: FRERE, highlight: [0, 1] },
+  { id: 'iv-ode-m2', title: { vi: 'Ode to Joy', en: 'Ode to Joy' }, source: ODE_SRC, notes: ODE, beats: ODE_BEATS, highlight: [1, 2] },
+  { id: 'iv-mary-m2d', title: { vi: 'Mary Had a Little Lamb', en: 'Mary Had a Little Lamb' }, source: PD('Bài hát thiếu nhi Mỹ thế kỷ 19', '19th-century American children\'s song'), notes: MARY, beats: MARY_BEATS, highlight: [0, 1] },
+  { id: 'iv-furelise-m2d', title: { vi: 'Für Elise (Beethoven)', en: 'Für Elise (Beethoven)' }, source: PD('Beethoven (1810)', 'Beethoven (1810)'), notes: FURELISE, beats: FURELISE_BEATS, highlight: [0, 1] },
+  { id: 'iv-bonnie-m6', title: { vi: 'My Bonnie Lies over the Ocean', en: 'My Bonnie Lies over the Ocean' }, source: PD('Dân ca Scotland', 'Scottish folk song'), notes: BONNIE, beats: BONNIE_BEATS, highlight: [0, 1] },
+  { id: 'iv-entertainer-m6', title: { vi: 'The Entertainer (Joplin)', en: 'The Entertainer (Joplin)' }, source: PD('Scott Joplin (1902)', 'Scott Joplin (1902)'), notes: ENTERTAINER, beats: ENTERTAINER_BEATS, highlight: [2, 3] },
+  { id: 'iv-leading-m7', title: { vi: 'Nốt dẫn: Đô – Si – Đô', en: 'Leading note: C – B – C' }, source: DEMO_SRC, notes: [60, 71, 72], beats: [1, 1, 2], highlight: [0, 1] },
+  { id: 'iv-g7-m7', title: { vi: 'Hợp âm Sol 7 rải', en: 'G7 arpeggio' }, source: DEMO_SRC, notes: [55, 59, 62, 65, 62, 59, 55], highlight: [0, 3] },
+  { id: 'iv-macabre-tt', title: { vi: 'Danse Macabre (Saint-Saëns)', en: 'Danse Macabre (Saint-Saëns)' }, source: PD('Saint-Saëns (1874): dây Mi của vĩ cầm hạ xuống Mi♭', 'Saint-Saëns (1874): the violin\'s E string tuned down to E♭'), notes: [69, 75, 69, 75, 69, 75], beats: [1, 1, 1, 1, 1, 2], highlight: [0, 1] },
+  { id: 'iv-resolve', title: { vi: 'Quãng căng và nơi nó về', en: 'Tense intervals and where they go' }, source: DEMO_SRC, notes: [65, 71, 64, 72, 55, 65, 60, 64], highlight: [0, 1, 4, 5] },
+];
+
+const BY_ID = new Map([...ANCHORS, ...INTERVAL_ANCHORS].map((a) => [a.id, a]));
 
 export function getAnchor(id: string): AnchorSong {
   const a = BY_ID.get(id);
