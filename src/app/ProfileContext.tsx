@@ -25,6 +25,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     if (!settings) return;
     if (i18n.language !== settings.language) void i18n.changeLanguage(settings.language);
     document.documentElement.lang = settings.language;
+    document.documentElement.dataset.theme = settings.theme ?? 'dark';
     audio.setVolume(settings.volume);
     audio.setInstrument(settings.instrument);
   }, [settings]);

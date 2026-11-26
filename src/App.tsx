@@ -2,7 +2,11 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ProfileProvider } from './app/ProfileContext';
 import { Layout } from './app/Layout';
 import { SECTIONS } from './app/sections';
-import { HomePage } from './pages/HomePage';
+import { GymPage } from './pages/GymPage';
+import { GamesPage } from './pages/GamesPage';
+import { PlayPage } from './pages/PlayPage';
+import { ExercisesPage } from './pages/ExercisesPage';
+import { StatsPage } from './pages/StatsPage';
 import { SoundCheckPage } from './pages/SoundCheckPage';
 import { ProfilesPage } from './pages/ProfilesPage';
 import { ComingSoonPage } from './pages/ComingSoonPage';
@@ -13,7 +17,11 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
-            <Route index element={<HomePage />} />
+            <Route index element={<GymPage />} />
+            <Route path="games" element={<GamesPage />} />
+            <Route path="play/:gameId" element={<PlayPage />} />
+            <Route path="exercises" element={<ExercisesPage />} />
+            <Route path="stats" element={<StatsPage />} />
             <Route path="sound" element={<SoundCheckPage />} />
             <Route path="profiles" element={<ProfilesPage />} />
             {SECTIONS.filter((s) => !s.ready).map((s) => (

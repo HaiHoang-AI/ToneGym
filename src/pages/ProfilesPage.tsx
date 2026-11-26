@@ -1,6 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { Link } from 'react-router-dom';
 import { useProfile } from '../app/ProfileContext';
 import {
   createProfile, deleteProfile, listProfiles, renameProfile, setActiveProfile, updateSettings,
@@ -119,12 +120,27 @@ export function ProfilesPage() {
       </section>
 
       <section className="card space-y-5">
-        <h2 className="text-xl font-semibold">{t('profiles.settingsTitle', { name: profile.name })}</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-xl font-semibold">{t('profiles.settingsTitle', { name: profile.name })}</h2>
+          <Link to="/sound" className="btn btn-sm">{t('nav.sound')}</Link>
+        </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label={t('profiles.language')}>
             <select className="field" value={s.language} onChange={(e) => set({ language: e.target.value as 'vi' | 'en' })}>
               <option value="vi">Tiếng Việt</option>
               <option value="en">English</option>
+            </select>
+          </Field>
+          <Field label={s.language === 'vi' ? 'Giao diện' : 'Theme'}>
+            <select className="field" value={s.theme ?? 'dark'} onChange={(e) => set({ theme: e.target.value as ProfileSettings['theme'] })}>
+              <option value="dark">{s.language === 'vi' ? 'Tối' : 'Dark'}</option>
+              <option value="light">{s.language === 'vi' ? 'Sáng' : 'Light'}</option>
+            </select>
+          </Field>
+          <Field label={s.language === 'vi' ? 'Trang phục Yumika' : "Yumika's outfit"}>
+            <select className="field" value={s.mascotOutfit ?? 'casual'} onChange={(e) => set({ mascotOutfit: e.target.value as ProfileSettings['mascotOutfit'] })}>
+              <option value="casual">{s.language === 'vi' ? 'Áo khoác jean' : 'Denim jacket'}</option>
+              <option value="maid">{s.language === 'vi' ? 'Hầu gái' : 'Maid'}</option>
             </select>
           </Field>
           <Field label={t('profiles.instrument')}>

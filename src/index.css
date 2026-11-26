@@ -1,18 +1,74 @@
 @import "tailwindcss";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+@import "@fontsource/space-grotesk/500.css";
+@import "@fontsource/space-grotesk/600.css";
+@import "@fontsource/space-grotesk/700.css";
 
+/* Theme tokens: Tailwind colours point at CSS variables that switch with data-theme. */
 @theme {
-  --color-bg: #0e1014;
-  --color-surface: #161a21;
-  --color-surface-2: #1e232c;
-  --color-line: #2a303c;
-  --color-ink: #e9ecf2;
-  --color-muted: #98a2b3;
+  --color-bg: var(--bg);
+  --color-bg-deep: var(--bg-deep);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface2);
+  --color-line: var(--line);
+  --color-line-2: var(--line2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink2);
+  --color-muted: var(--muted);
+  --color-link: var(--link);
+  --color-good-ink: var(--good-ink);
+  --color-bad-ink: var(--bad-ink);
   --color-accent: #f4b740;
   --color-accent-ink: #1a1405;
   --color-teal: #39d0c0;
   --color-good: #34d399;
   --color-bad: #f87171;
-  --font-sans: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --color-sk-intervals: #39d0c0;
+  --color-sk-chords: #f4b740;
+  --color-sk-scales: #a78bfa;
+  --color-sk-progressions: #60a5fa;
+  --color-sk-melody: #f472b6;
+  --color-sk-rhythm: #fb923c;
+  --color-sk-reading: #34d399;
+  --color-sk-singing: #f87171;
+  --font-sans: "Inter", system-ui, "Segoe UI", Arial, sans-serif;
+  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+}
+
+:root,
+:root[data-theme="dark"] {
+  --bg: #0e1014;
+  --bg-deep: #0b0d11;
+  --surface: #161a21;
+  --surface2: #1e232c;
+  --line: #2a303c;
+  --line2: #3a4150;
+  --ink: #e9ecf2;
+  --ink2: #c3cad6;
+  --muted: #98a2b3;
+  --link: #f4b740;
+  --good-ink: #34d399;
+  --bad-ink: #f87171;
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg: #fbf7f0;
+  --bg-deep: #f3eee4;
+  --surface: #ffffff;
+  --surface2: #f3eee5;
+  --line: #e3dccd;
+  --line2: #cfc6b4;
+  --ink: #1f2430;
+  --ink2: #3d4555;
+  --muted: #5f6878;
+  --link: #9a6200;
+  --good-ink: #047857;
+  --bad-ink: #b42318;
+  color-scheme: light;
 }
 
 html,
@@ -22,8 +78,8 @@ body,
 }
 
 body {
-  background: var(--color-bg);
-  color: var(--color-ink);
+  background: var(--bg);
+  color: var(--ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
@@ -33,20 +89,41 @@ body {
   outline-offset: 2px;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 @layer components {
   .btn {
-    @apply inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-line bg-surface-2 px-3.5 py-2 text-sm font-medium text-ink transition hover:border-accent/60 hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex min-h-11 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-[10px] border border-line bg-surface-2 px-4 text-sm font-semibold text-ink transition hover:border-accent disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply border-accent bg-accent text-accent-ink hover:bg-accent/90 hover:border-accent;
+    @apply border-accent bg-accent text-accent-ink hover:bg-[#ffc95e];
+  }
+  .btn-sm {
+    @apply min-h-9 px-3 text-[13px];
   }
   .card {
-    @apply rounded-2xl border border-line bg-surface p-5;
+    @apply rounded-2xl border border-line bg-surface p-6;
   }
   .field {
-    @apply w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-accent;
+    @apply min-h-11 w-full rounded-[10px] border border-line bg-surface-2 px-3 text-sm text-ink outline-none focus:border-accent;
   }
   .label {
-    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted;
+    @apply mb-2 block text-xs font-semibold uppercase tracking-[0.06em] text-muted;
+  }
+  .h-display {
+    font-family: var(--font-display);
+  }
+  .kbd {
+    @apply inline-grid h-[22px] min-w-[22px] place-items-center rounded-md border border-line-2 bg-bg px-1.5 text-[11px] font-semibold text-ink-2;
+  }
+  .chip {
+    @apply min-h-10 rounded-full border border-line bg-surface px-4 text-sm font-medium text-ink-2 transition hover:border-muted;
   }
 }
