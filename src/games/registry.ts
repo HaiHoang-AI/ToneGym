@@ -2,6 +2,7 @@ import { chordByNameQuestion, chordIdQuestion, inversionQuestion } from './defs/
 import { compareQuestion, intervalQuestion } from './defs/intervals';
 import { progressionQuestion, scaleQuestion } from './defs/scalesProgressions';
 import { readingQuestion } from './defs/reading';
+import { sightSingQuestion, singBackQuestion, singIntervalQuestion } from './defs/singing';
 import { melodyCopyQuestion, melodyHuntQuestion, rhythmEchoQuestion, rhythmReadQuestion } from './defs/melodyRhythm';
 import type { GameDef } from './types';
 
@@ -104,16 +105,19 @@ export const GAMES: GameDef[] = [
     id: 'sing-back', skill: 'singing', phase: 5, art: { variant: 3, mark: 'up' },
     name: { vi: 'Hát lại', en: 'Sing Back' },
     desc: { vi: 'Nghe giai điệu rồi hát lại vào micro.', en: 'Hear a melody, sing it back into the microphone.' },
+    makeQuestion: singBackQuestion,
   },
   {
     id: 'sight-sing', skill: 'singing', phase: 5, art: { variant: 0, mark: 'up' },
     name: { vi: 'Xướng âm', en: 'Sight Singing' },
     desc: { vi: 'Nhìn bản nhạc và hát đúng cao độ vào micro.', en: 'Read the notation and sing it in tune.' },
+    makeQuestion: sightSingQuestion,
   },
   {
     id: 'sing-interval', skill: 'singing', phase: 5, art: { variant: 2, mark: 'up' },
     name: { vi: 'Hát quãng', en: 'Sing the Interval' },
     desc: { vi: 'Cho nốt đầu và tên quãng. Hát ra nốt thứ hai.', en: 'Given a note and an interval name, sing the second note.' },
+    makeQuestion: singIntervalQuestion,
   },
 ];
 

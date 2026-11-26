@@ -8,6 +8,7 @@ import { Yumika } from '../components/art/Characters';
 import { NoteInput } from '../components/NoteInput';
 import { RhythmInput } from '../components/RhythmInput';
 import { Staff } from '../components/Staff';
+import { SingInput } from '../components/SingInput';
 import { melodic } from '../games/sound';
 import { getGame } from '../games/registry';
 import { CHANGE_LEVEL_FROM, HINTS_PER_LEVEL, LIVES_PER_LEVEL, STAGES_PER_LEVEL } from '../games/levels';
@@ -49,8 +50,13 @@ export function PlayPage() {
   const l = useL();
   const navigate = useNavigate();
   const ctx = useMemo(
-    () => ({ lang: profile.settings.language, accidentals: profile.settings.accidentals, naming: profile.settings.noteNaming }),
-    [profile.settings.language, profile.settings.accidentals, profile.settings.noteNaming],
+    () => ({
+      lang: profile.settings.language,
+      accidentals: profile.settings.accidentals,
+      naming: profile.settings.noteNaming,
+      vocalRange: profile.settings.vocalRange,
+    }),
+    [profile.settings.language, profile.settings.accidentals, profile.settings.noteNaming, profile.settings.vocalRange],
   );
   const rng = useRef(createRng(Date.now() & 0xffffffff));
   const [progress, setProgress] = useState<GameProgress | null>(null);
@@ -80,7 +86,7 @@ export function PlayPage() {
     window.__earlab = {
       correctId: q?.correctId,
       phase: session?.phase,
-      target: q?.input?.kind === 'notes' ? q.input.target : undefined,
+      target: q?.input?.kind === 'notes' ? q.input.target : q?.input?.kind === 'sing' ? q.input.targets : undefined,
       answer: (id: string) => setSession((s) => (s ? answer(s, id) : s)),
     };
   }, [q, session?.phase]);
@@ -355,10 +361,14 @@ export function PlayPage() {
   const picked = session.question.options.find((o) => o.id === session.picked);
   const correctOpt = session.question.options.find((o) => o.id === session.question.correctId) ?? {
     id: 'ok',
-    label: session.question.input?.kind === 'notes'
-      ? l('giai điệu bên trên', 'the melody above')
-      : l('tiết tấu bên trên', 'the rhythm above'),
-    sound: session.question.input?.kind === 'notes' ? melodic(session.question.input.target, 0.6) : session.question.sound,
+    label: session.question.input?.kind === 'rhythm'
+      ? l('tiết tấu bên trên', 'the rhythm above')
+      : l('giai điệu bên trên', 'the melody above'),
+    sound: session.question.input?.kind === 'notes'
+      ? melodic(session.question.input.target, 0.6)
+      : session.question.input?.kind === 'sing'
+        ? melodic(session.question.input.targets, 0.6)
+        : session.question.sound,
   };
   const yours = picked ?? (entered ? { id: 'wrong', label: l('của bạn', 'yours'), sound: melodic(entered, 0.6) } : undefined);
 
@@ -434,6 +444,24 @@ export function PlayPage() {
               theme={profile.settings.theme}
               disabled={answered}
               onDone={(g) => choose(g.passed ? 'ok' : 'wrong')}
+            />
+          </section>
+        )}
+
+        {session.question.input?.kind === 'sing' && (
+          <section className="rounded-[20px] border border-line bg-surface p-5">
+            <SingInput
+              targets={session.question.input.targets}
+              toleranceCents={session.question.input.toleranceCents}
+              octaveFree={session.question.input.octaveFree}
+              showNames={session.question.input.showNames}
+              naming={profile.settings.noteNaming}
+              accidentals={profile.settings.accidentals}
+              disabled={answered}
+              onDone={(r) => {
+                setEntered(r.notes.map((n) => Math.round(n.sung ?? n.target)));
+                choose(r.passed ? 'ok' : 'wrong');
+              }}
             />
           </section>
         )}

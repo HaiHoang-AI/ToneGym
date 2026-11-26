@@ -13,9 +13,12 @@ import { ComingSoonPage } from './pages/ComingSoonPage';
 import { PlaygroundPage } from './pages/PlaygroundPage';
 import { MelodyPlaygroundPage } from './pages/MelodyPlaygroundPage';
 import { SightReadingPlaygroundPage } from './pages/SightReadingPlaygroundPage';
+import { ToolsPage } from './pages/tools/ToolsPage';
+import { PerfectPitchTool, TunerTool, VocalRangeTool } from './pages/tools/MicTools';
+import { SightSingingTool, WarmupTool } from './pages/tools/SingingTools';
 
 /** Highest build phase merged into this app (gates "coming soon" items). */
-export const SHIPPED_PHASE = 4;
+export const SHIPPED_PHASE = 5;
 
 export default function App() {
   return (
@@ -31,6 +34,12 @@ export default function App() {
             <Route path="playground" element={<PlaygroundPage shipped={SHIPPED_PHASE} />} />
             <Route path="playground/melody" element={<MelodyPlaygroundPage />} />
             <Route path="playground/sight-reading" element={<SightReadingPlaygroundPage />} />
+            <Route path="tools" element={<ToolsPage shipped={SHIPPED_PHASE} />} />
+            <Route path="tools/tuner" element={<TunerTool />} />
+            <Route path="tools/vocal-range" element={<VocalRangeTool />} />
+            <Route path="tools/perfect-pitch" element={<PerfectPitchTool />} />
+            <Route path="tools/sight-singing" element={<SightSingingTool />} />
+            <Route path="tools/warmup" element={<WarmupTool />} />
             <Route path="sound" element={<SoundCheckPage />} />
             <Route path="profiles" element={<ProfilesPage />} />
             {SECTIONS.filter((s) => !s.ready).map((s) => (
