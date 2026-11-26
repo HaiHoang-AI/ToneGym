@@ -99,6 +99,14 @@ export interface ExerciseBest {
   correct: number;
 }
 
+/** Per-profile saved data of the tools (saved progressions, interval songs, recordings…). */
+export interface ToolDataEntry {
+  profileId: number;
+  key: string;
+  value: unknown;
+  updatedAt: number;
+}
+
 export const DEFAULT_SETTINGS: ProfileSettings = {
   language: 'vi',
   theme: 'dark',
@@ -136,6 +144,7 @@ export class EarLabDB extends Dexie {
   workouts!: Table<WorkoutDay, [number, string]>;
   stats!: Table<ProfileStats, number>;
   exerciseBests!: Table<ExerciseBest, [number, string]>;
+  toolData!: Table<ToolDataEntry, [number, string]>;
 
   constructor(name = 'earlab') {
     super(name);
@@ -161,6 +170,16 @@ export class EarLabDB extends Dexie {
             p.settings = { ...DEFAULT_SETTINGS, ...p.settings };
           });
       });
+    this.version(3).stores({
+      profiles: '++id, name, createdAt',
+      meta: 'key',
+      gameProgress: '[profileId+gameId], profileId',
+      attempts: '++id, profileId, gameId, at',
+      workouts: '[profileId+date], profileId',
+      stats: 'profileId',
+      exerciseBests: '[profileId+exerciseId], profileId',
+      toolData: '[profileId+key], profileId',
+    });
   }
 }
 
