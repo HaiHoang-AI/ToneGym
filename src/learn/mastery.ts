@@ -45,3 +45,37 @@ export function answersByItem(results: readonly { itemId: string; correct: boole
   for (const r of results) out.set(r.itemId, [...(out.get(r.itemId) ?? []), r.correct]);
   return out;
 }
+
+export interface DailyItem {
+  pathId: PathId;
+  itemId: string;
+  kind: 'review' | 'new';
+}
+
+export const DAILY_SIZE = 25;
+export const DAILY_MAX_REVIEW = 16;
+
+/**
+ * Today's session: up to 16 reviews of items that are due (weakest first), then new items from
+ * the next lesson, each asked a few times, filling up to 25 questions.
+ */
+export function pickDaily(masteries: readonly ItemMastery[], fresh: readonly { pathId: PathId; itemId: string }[], now = Date.now()): DailyItem[] {
+  const due = masteries
+    .filter((m) => m.seen > 0 && m.due <= now)
+    .sort((a, b) => masteryNow(a, now) - masteryNow(b, now))
+    .slice(0, DAILY_MAX_REVIEW)
+    .map((m): DailyItem => ({ pathId: m.pathId, itemId: m.itemId, kind: 'review' }));
+  const known = new Set(masteries.filter((m) => m.seen > 0).map((m) => `${m.pathId}:${m.itemId}`));
+  const newOnes = fresh.filter((f) => !known.has(`${f.pathId}:${f.itemId}`));
+  const out = [...due];
+  if (newOnes.length > 0) {
+    for (let i = 0; out.length < DAILY_SIZE; i++) out.push({ ...newOnes[i % newOnes.length]!, kind: 'new' });
+  } else {
+    const extra = [...masteries].filter((m) => m.seen > 0).sort((a, b) => masteryNow(a, now) - masteryNow(b, now));
+    for (let i = 0; extra.length > 0 && out.length < DAILY_SIZE; i++) {
+      const m = extra[i % extra.length]!;
+      out.push({ pathId: m.pathId, itemId: m.itemId, kind: 'review' });
+    }
+  }
+  return out;
+}

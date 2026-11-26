@@ -1,4 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
+import { LearnStats } from '../components/learn/LearnStats';
 import { useProfile } from '../app/ProfileContext';
 import { useL } from '../app/useL';
 import { db } from '../db/schema';
@@ -97,6 +98,8 @@ export function StatsPage() {
           <p className="mt-1 text-[13px] leading-relaxed text-muted">{l('Huy chương hạng chỉ được trao khi bạn hoàn thành workout trong ngày.', 'Rank medals are awarded when you finish a daily workout.')}</p>
         </section>
       </div>
+
+      <LearnStats />
 
       <div className="flex flex-wrap gap-6">
         <section className="card min-w-0 flex-[999_1_560px]">

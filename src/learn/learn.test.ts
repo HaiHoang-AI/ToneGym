@@ -2,15 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { soundLength } from '../games/sound';
 import { createRng, getChord, getScale } from '../theory';
 import { getAnchor } from './anchors';
-import { generateLesson, GUIDED_COUNT, itemPc, lessonItems, progressionChords, questionSound, semitonesOf, TRAP_COUNT } from './generators';
+import { generateLesson, GUIDED_COUNT, itemPc, lessonItems, progressionChords, questionSound, semitonesOf, singleQuestion, TRAP_COUNT } from './generators';
 import { CHORDS_PATH } from './paths/chords';
 import { INTERVALS_PATH } from './paths/intervals';
 import { PROGRESSIONS_PATH } from './paths/progressions';
 import { SCALES_PATH } from './paths/scales';
-import { applySession, masteryNow, newMastery, pathMastery } from './mastery';
+import { applySession, DAILY_MAX_REVIEW, DAILY_SIZE, masteryNow, newMastery, pathMastery, pickDaily } from './mastery';
+import { freshItems, unlockedItems } from './daily';
 import { PITCH_PATH } from './paths/pitch';
 import { computeStars, lessonsToSkip, pathStatuses } from './stars';
-import { REGISTERS, type LessonProgress } from './types';
+import { REGISTERS, type ItemMastery, type LessonProgress } from './types';
 
 const prog = (lessonId: string, stars: number, skipped = false): LessonProgress => ({
   profileId: 1, pathId: 'pitch', lessonId, stars, bestPct: 0, attempts: 1, skipped, pinned: false, updatedAt: 0,
@@ -295,5 +296,46 @@ describe('scales and progressions paths', () => {
     // Joy to the World is the major scale going down.
     const joy = getAnchor('sc-joy-major').notes;
     expect(joy.map((n) => n - joy.at(-1)!).reverse()).toEqual([0, 2, 4, 5, 7, 9, 11, 12]);
+  });
+});
+
+describe('daily session and practice', () => {
+  const m = (pathId: 'pitch' | 'intervals', itemId: string, ewma: number, due: number): ItemMastery => ({
+    profileId: 1, pathId, itemId, ewma, seen: 10, correct: 5, lastSeen: 0, intervalDays: 1, due,
+  });
+
+  it('reviews due items weakest first (max 16), then fills 25 with new items', () => {
+    const due = Array.from({ length: 20 }, (_, i) => m('pitch', `x${i}`, i / 20, 0));
+    const picked = pickDaily([...due, m('pitch', 'later', 0, 10_000)], [{ pathId: 'intervals', itemId: 'P5' }], 5_000);
+    expect(picked).toHaveLength(DAILY_SIZE);
+    const reviews = picked.filter((p) => p.kind === 'review');
+    expect(reviews).toHaveLength(DAILY_MAX_REVIEW);
+    expect(reviews[0]!.itemId).toBe('x0');
+    expect(reviews.some((r) => r.itemId === 'later')).toBe(false);
+    expect(picked.filter((p) => p.kind === 'new').every((p) => p.itemId === 'P5')).toBe(true);
+  });
+
+  it('a new player gets the first pitch items as new material', () => {
+    expect(freshItems([])).toEqual([{ pathId: 'pitch', itemId: 'C' }, { pathId: 'pitch', itemId: 'G' }]);
+    const picked = pickDaily([], freshItems([]), 0);
+    expect(picked).toHaveLength(DAILY_SIZE);
+    expect(new Set(picked.map((p) => p.itemId))).toEqual(new Set(['C', 'G']));
+  });
+
+  it('practice only asks items the player has reached', () => {
+    const row = (lessonId: string, stars: number, skipped = false): LessonProgress => ({ profileId: 1, pathId: 'pitch', lessonId, stars, bestPct: 0, attempts: 1, skipped, pinned: false, updatedAt: 0 });
+    expect(unlockedItems(PITCH_PATH, [])).toEqual(['C', 'G']);
+    expect(unlockedItems(PITCH_PATH, [row('pitch-intro', 3), row('pitch-1', 3)]).sort()).toEqual(['C', 'G']);
+    expect(unlockedItems(PITCH_PATH, [row('pitch-intro', 3), row('pitch-1', 3), row('pitch-2', 3)]).sort()).toEqual(['C', 'E', 'G']);
+  });
+
+  it('practice questions in C keep a fixed root, random ones vary', () => {
+    const rng = createRng(1);
+    for (let i = 0; i < 10; i++) {
+      expect(Math.min(...singleQuestion('intervals', 'P5', 'c', rng).notes)).toBe(60);
+      expect(singleQuestion('progressions', 'I-V-vi-IV', 'c', rng).root).toBe(60);
+    }
+    const roots = new Set(Array.from({ length: 20 }, () => singleQuestion('chords', 'maj', 'random', rng).notes[0]));
+    expect(roots.size).toBeGreaterThan(3);
   });
 });

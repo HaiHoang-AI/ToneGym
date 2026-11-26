@@ -157,3 +157,18 @@ export interface ItemMastery {
   intervalDays: number;
   due: number;
 }
+
+/** One day of one path: mastery snapshot and how much was practised. */
+export interface MasteryDay {
+  profileId: number;
+  /** Local date YYYY-MM-DD. */
+  date: string;
+  pathId: PathId;
+  /** Path mastery 0–1 at the end of the day. */
+  mastery: number;
+  /** Item mastery 0–1 at the end of the day. */
+  items: Record<string, number>;
+  answered: number;
+  correct: number;
+  ms: number;
+}

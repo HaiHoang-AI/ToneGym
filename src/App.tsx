@@ -22,6 +22,8 @@ import { LearnPage, LessonPage } from './pages/LearnPage';
 import { LearnHub } from './pages/learn/LearnHub';
 import { PathPage } from './pages/learn/PathPage';
 import { LessonRoute } from './pages/learn/LessonRunner';
+import { PracticeRoute } from './pages/learn/PracticeQuiz';
+import { DailySession } from './pages/learn/DailySession';
 import { ContestPage } from './pages/ContestPage';
 import { AwardsPage, ShopPage } from './pages/ShopAwardsPages';
 
@@ -58,7 +60,9 @@ export default function App() {
             <Route path="learn" element={<LearnHub />} />
             <Route path="learn/theory" element={<LearnPage />} />
             <Route path="learn/theory/:lessonId" element={<LessonPage />} />
+            <Route path="learn/daily" element={<DailySession />} />
             <Route path="learn/:pathId" element={<PathPage />} />
+            <Route path="learn/:pathId/practice" element={<PracticeRoute />} />
             <Route path="learn/:pathId/:lessonId" element={<LessonRoute />} />
             <Route path="contest" element={<ContestPage />} />
             <Route path="shop" element={<ShopPage />} />

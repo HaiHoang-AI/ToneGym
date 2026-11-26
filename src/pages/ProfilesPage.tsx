@@ -166,6 +166,12 @@ export function ProfilesPage() {
               <option value="off">{s.language === 'vi' ? 'Không phát lại' : 'Do not replay'}</option>
             </select>
           </Field>
+          <Field label={s.language === 'vi' ? 'Lộ trình: giọng khi luyện tự do' : 'Paths: key in practice mode'}>
+            <select className="field" value={s.learnPracticeKey ?? 'random'} onChange={(e) => set({ learnPracticeKey: e.target.value as ProfileSettings['learnPracticeKey'] })}>
+              <option value="random">{s.language === 'vi' ? 'Ngẫu nhiên' : 'Random'}</option>
+              <option value="c">{s.language === 'vi' ? 'Luôn từ Đô' : 'Always from C'}</option>
+            </select>
+          </Field>
           <Field label={t('profiles.instrument')}>
             <select
               className="field"

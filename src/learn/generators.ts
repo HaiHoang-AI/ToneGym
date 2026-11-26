@@ -262,3 +262,22 @@ export function compareSound(pathId: PathId, q: LearnQuestion, chosen: string | 
   if (chosen === 'yes' || chosen === 'no') return concat([melodic([played]), melodic([near(yesItem!)])], 0.4);
   return chosen ? concat([melodic([near(chosen)]), melodic([played])], 0.4) : undefined;
 }
+
+/** Lesson-shaped settings for free practice and the daily session: every item of `pool`, in C or anywhere. */
+export function practiceLesson(pathId: PathId, pool: string[], key: 'c' | 'random'): LessonDef {
+  const base: LessonDef = { id: `${pathId}-practice`, kind: 'checkpoint', title: { vi: '', en: '' }, desc: { vi: '', en: '' }, newItems: [], slides: [], anchors: [], pool, register: 'mid', traps: [], questionCount: 1 };
+  const c = key === 'c';
+  switch (pathId) {
+    case 'pitch': return { ...base, register: c ? 'mid' : 'any' };
+    case 'intervals': return { ...base, register: 'wide', direction: c ? 'up' : 'both', root: c ? 60 : undefined };
+    case 'chords': return { ...base, register: c ? 'chord' : 'chordAny', root: c ? 48 : undefined };
+    case 'scales': return { ...base, register: c ? 'scale' : 'scaleAny', direction: 'both', root: c ? 60 : undefined };
+    case 'progressions': return { ...base, register: c ? 'key' : 'keyAny' };
+  }
+}
+
+/** One graded question about `itemId` with practice settings. */
+export function singleQuestion(pathId: PathId, itemId: string, key: 'c' | 'random', rng: Rng): LearnQuestion {
+  const lesson = practiceLesson(pathId, [itemId], key);
+  return generateLesson(lesson, rng, pathId).main[0]!;
+}

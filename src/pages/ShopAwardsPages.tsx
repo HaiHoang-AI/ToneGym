@@ -113,6 +113,11 @@ const AWARDS: { id: string; name: Bilingual; desc: Bilingual }[] = [
   { id: 'contest-bronze', name: { vi: 'Hạng ba tuần', en: 'Weekly third' }, desc: { vi: 'Hạng 3 thử thách tuần', en: '3rd in a weekly challenge' } },
   { id: 'full-studio', name: { vi: 'Phòng nhạc đầy đủ', en: 'Full studio' }, desc: { vi: 'Sở hữu mọi nhạc cụ', en: 'Own every instrument' } },
   { id: 'course', name: { vi: 'Tốt nghiệp nhạc lý', en: 'Theory graduate' }, desc: { vi: 'Học xong cả khóa nhạc lý', en: 'Finish the whole theory course' } },
+  { id: 'grad-pitch', name: { vi: 'Tốt nghiệp Cao độ', en: 'Pitch graduate' }, desc: { vi: '3★ thi cuối lộ trình Cao độ', en: '3★ on the Pitch final exam' } },
+  { id: 'grad-intervals', name: { vi: 'Tốt nghiệp Quãng', en: 'Intervals graduate' }, desc: { vi: '3★ thi cuối lộ trình Quãng', en: '3★ on the Intervals final exam' } },
+  { id: 'grad-chords', name: { vi: 'Tốt nghiệp Hợp âm', en: 'Chords graduate' }, desc: { vi: '3★ thi cuối lộ trình Hợp âm', en: '3★ on the Chords final exam' } },
+  { id: 'grad-scales', name: { vi: 'Tốt nghiệp Âm giai', en: 'Scales graduate' }, desc: { vi: '3★ thi cuối lộ trình Âm giai', en: '3★ on the Scales final exam' } },
+  { id: 'grad-progressions', name: { vi: 'Tốt nghiệp Vòng hợp âm', en: 'Progressions graduate' }, desc: { vi: '3★ thi cuối lộ trình Vòng hợp âm', en: '3★ on the Progressions final exam' } },
 ];
 
 export function AwardsPage() {

@@ -5,22 +5,17 @@ import { useProfile } from '../../app/ProfileContext';
 import { useL } from '../../app/useL';
 import { Teacher, Yumika } from '../../components/art/Characters';
 import { AnchorCard, playAnchor } from '../../components/learn/AnchorCard';
+import { QuestionCard } from '../../components/learn/QuestionCard';
 import { StarRow } from '../../components/learn/StarRow';
 import { PianoKeyboard, type KeyMark } from '../../components/PianoKeyboard';
 import { chordSequence, melodic } from '../../games/sound';
 import { getAnchor } from '../../learn/anchors';
-import { compareSound, generateLesson, itemLabel, itemName, itemSymbol, itemPc, lessonItems, PITCH_ITEMS, questionSound, sortItems } from '../../learn/generators';
+import { generateLesson, itemLabel, itemName, itemSymbol, lessonItems, sortItems } from '../../learn/generators';
 import { getPath } from '../../learn/paths';
 import { computeStars, isPassed, pathStatuses } from '../../learn/stars';
 import { saveLessonRun, togglePin, usePathProgress, type LessonOutcome } from '../../learn/store';
 import type { LearnQuestion, LessonDef, PathDef, QuestionStage, Slide } from '../../learn/types';
-import { createRng, displayNoteName, midiToName } from '../../theory';
-
-declare global {
-  interface Window {
-    __earlabLearn?: { phase: string; answerId?: string; key?: string; index: number };
-  }
-}
+import { createRng, displayNoteName } from '../../theory';
 
 export function LessonRoute() {
   const { pathId = '', lessonId = '' } = useParams();
@@ -46,12 +41,10 @@ interface Answer {
   correct: boolean;
 }
 
-const CORRECT_DELAY = 450;
 
 function LessonRunner({ path, lesson, onRetry }: { path: PathDef; lesson: LessonDef; onRetry: () => void }) {
   const l = useL();
   const profile = useProfile();
-  const s = profile.settings;
   const progress = usePathProgress(profile.id, path.id);
   const questions = useMemo(() => generateLesson(lesson, createRng(Date.now()), path.id), [lesson, path.id]);
   const phases = useMemo(() => phasesFor(lesson, questions.traps.length > 0), [lesson, questions]);
@@ -59,50 +52,30 @@ function LessonRunner({ path, lesson, onRetry }: { path: PathDef; lesson: Lesson
   const phase = phases[phaseIndex]!;
   const [slide, setSlide] = useState(0);
   const [qIndex, setQIndex] = useState(0);
-  const [feedback, setFeedback] = useState<{ chosen: string | null; ok: boolean } | null>(null);
-  const [wrongFlash, setWrongFlash] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [anchorUses, setAnchorUses] = useState(0);
   const [outcome, setOutcome] = useState<LessonOutcome | null>(null);
   const saving = useRef(false);
+  const startedAt = useRef(Date.now());
 
   const list: LearnQuestion[] = phase === 'try' ? questions.tries : phase === 'guided' ? questions.guided : phase === 'main' ? questions.main : phase === 'trap' ? questions.traps : [];
   const q = list[qIndex];
-  const isYesNo = lesson.mode === 'yesno';
-  const isPitch = path.id === 'pitch';
   const items = useMemo(() => sortItems(path.id, lessonItems(lesson)), [lesson, path.id]);
-  const enabledKeys = useMemo(() => (isPitch ? items.map((id) => 60 + itemPc(id)) : []), [items, isPitch]);
   const helped = phase === 'try' || phase === 'guided';
-  const graded = phase === 'main' || phase === 'trap';
   const name = useCallback(
-    (id: string) => (isPitch ? displayNoteName(itemLabel(id), s.noteNaming) : `${itemSymbol(path.id, id)} · ${l(itemName(path.id, id) ?? id)}`),
-    [s.noteNaming, isPitch, l, path.id],
+    (id: string) => (path.id === 'pitch' ? displayNoteName(itemLabel(id), profile.settings.noteNaming) : `${itemSymbol(path.id, id)} · ${l(itemName(path.id, id) ?? id)}`),
+    [profile.settings.noteNaming, l, path.id],
   );
 
   const next = () => {
     audio.stop();
     setPhaseIndex((i) => Math.min(phases.length - 1, i + 1));
     setQIndex(0);
-    setFeedback(null);
   };
-
-  const playQuestion = useCallback(async (x: LearnQuestion | undefined) => {
-    if (!x) return;
-    await audio.start();
-    audio.stop();
-    await audio.playSequence(questionSound(x).steps);
-  }, []);
-
-  // Play every new question once.
-  useEffect(() => {
-    if (q) void playQuestion(q);
-  }, [q, playQuestion]);
 
   useEffect(() => () => audio.stop(), []);
 
   const advance = useCallback(() => {
-    setFeedback(null);
-    setWrongFlash(null);
     if (qIndex + 1 < list.length) setQIndex(qIndex + 1);
     else {
       setPhaseIndex((i) => Math.min(phases.length - 1, i + 1));
@@ -110,49 +83,12 @@ function LessonRunner({ path, lesson, onRetry }: { path: PathDef; lesson: Lesson
     }
   }, [qIndex, list.length, phases.length]);
 
-  const compare = useCallback(
-    async (x: LearnQuestion, chosen: string | null) => {
-      if (s.learnCompare === false) return;
-      const sound = compareSound(path.id, x, chosen, lesson.yesItem);
-      if (!sound) return;
-      await audio.start();
-      audio.stop();
-      await audio.playSequence(sound.steps);
+  const record = useCallback(
+    (correct: boolean) => {
+      if (q) setAnswers((a) => [...a, { stage: phase as QuestionStage, itemId: q.itemId, correct }]);
     },
-    [s.learnCompare, path.id, lesson.yesItem],
+    [q, phase],
   );
-
-  const answer = useCallback(
-    (id: string) => {
-      if (!q || feedback) return;
-      const ok = id === q.answerId;
-      if (helped) {
-        if (!ok) {
-          setWrongFlash(id);
-          window.setTimeout(() => setWrongFlash(null), 400);
-          return;
-        }
-        setFeedback({ chosen: id, ok: true });
-        window.setTimeout(advance, CORRECT_DELAY);
-        return;
-      }
-      setAnswers((a) => [...a, { stage: phase as QuestionStage, itemId: q.itemId, correct: ok }]);
-      setFeedback({ chosen: id, ok });
-      if (ok) window.setTimeout(advance, CORRECT_DELAY);
-      else void compare(q, id);
-    },
-    [q, feedback, helped, phase, advance, compare],
-  );
-
-  // Time limit of checkpoints and the final exam.
-  useEffect(() => {
-    if (!q || feedback || !graded || !lesson.timeLimitMs) return;
-    const t = window.setTimeout(() => {
-      setAnswers((a) => [...a, { stage: phase as QuestionStage, itemId: q.itemId, correct: false }]);
-      setFeedback({ chosen: null, ok: false });
-    }, lesson.timeLimitMs);
-    return () => window.clearTimeout(t);
-  }, [q, feedback, graded, lesson.timeLimitMs, phase]);
 
   // Save once on reaching the results.
   useEffect(() => {
@@ -160,41 +96,13 @@ function LessonRunner({ path, lesson, onRetry }: { path: PathDef; lesson: Lesson
     saving.current = true;
     const main = answers.filter((a) => a.stage === 'main');
     const result = lesson.kind === 'intro' ? { stars: 3, pct: 100 } : computeStars(main.filter((a) => a.correct).length, main.length, anchorUses);
-    void saveLessonRun(profile.id!, path, lesson.id, result, answers).then(setOutcome);
+    void saveLessonRun(profile.id!, path, lesson.id, result, answers, Date.now() - startedAt.current).then(setOutcome);
   }, [phase, answers, anchorUses, lesson, path, profile.id]);
 
-  // Test hook.
+  // Test hook between questions.
   useEffect(() => {
-    window.__earlabLearn = {
-      phase,
-      index: qIndex,
-      answerId: q?.answerId,
-      key: q && !isYesNo && isPitch && s.learnPitchInput !== 'buttons' ? midiToName(60 + itemPc(q.answerId), s.accidentals) : undefined,
-    };
-  }, [phase, qIndex, q, isYesNo, isPitch, s.accidentals, s.learnPitchInput]);
-
-  const questionText = () => {
-    if (!q) return '';
-    if (isYesNo) return l(`Có phải ${name(lesson.yesItem!)} không?`, `Is it ${name(lesson.yesItem!)}?`);
-    if (isPitch) return q.notes.length > 1 ? l('Nốt cuối cùng là nốt gì?', 'What is the last note?') : l('Nốt vừa nghe là nốt gì?', 'Which note was that?');
-    if (path.id === 'chords') return l('Hợp âm gì?', 'Which chord?');
-    if (path.id === 'progressions') return l('Vòng hợp âm nào? (bắt đầu từ chủ âm)', 'Which progression? (starts on the tonic)');
-    if (path.id === 'scales') return q.notes[0]! > q.notes.at(-1)! ? l('Âm giai gì? (đi xuống)', 'Which scale? (going down)') : l('Âm giai gì? (đi lên)', 'Which scale? (going up)');
-    const how = q.harmonic ? l('vang cùng lúc', 'together') : q.notes[1]! < q.notes[0]! ? l('đi xuống', 'going down') : l('đi lên', 'going up');
-    return l(`Quãng gì? (${how})`, `Which interval? (${how})`);
-  };
-
-  // Number keys answer with the buttons.
-  useEffect(() => {
-    if (isPitch && !isYesNo && s.learnPitchInput !== 'buttons') return;
-    const onKey = (e: KeyboardEvent) => {
-      const n = Number(e.key);
-      const choices = isYesNo ? ['yes', 'no'] : items;
-      if (n >= 1 && n <= choices.length) answer(choices[n - 1]!);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [isPitch, isYesNo, s.learnPitchInput, items, answer]);
+    if (!q) window.__earlabLearn = { phase, index: 0 };
+  }, [phase, q]);
 
   const index = path.lessons.indexOf(lesson);
   const nextLesson = path.lessons[index + 1];
@@ -235,24 +143,22 @@ function LessonRunner({ path, lesson, onRetry }: { path: PathDef; lesson: Lesson
       )}
 
       {q && (
-        <section className="card flex flex-col gap-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <div className="text-xs font-bold uppercase tracking-wide" style={{ color: path.color }}>{stageLabel(phase, l)}</div>
-              <div className="text-lg font-semibold">
-                {questionText()}
-              </div>
-            </div>
-            <div className="text-sm font-semibold text-muted">{qIndex + 1} / {list.length}</div>
-          </div>
-          {lesson.timeLimitMs && graded && !feedback && (
-            <div className="h-1.5 overflow-hidden rounded-full bg-surface-2">
-              <div key={`${phase}-${qIndex}`} className="h-full origin-left" style={{ background: path.color, animation: `learn-timer ${lesson.timeLimitMs}ms linear forwards` }} />
-            </div>
-          )}
-          <div className="flex flex-wrap gap-2">
-            <button type="button" className="btn btn-sm" onClick={() => void playQuestion(q)}>↻ {l('Nghe lại', 'Replay')}</button>
-            {phase === 'main' && lesson.kind === 'lesson' && lesson.anchors[0] && (
+        <QuestionCard
+          key={`${phase}-${qIndex}`}
+          pathId={path.id}
+          q={q}
+          options={items}
+          yesItem={lesson.mode === 'yesno' ? lesson.yesItem : undefined}
+          helped={helped}
+          timeLimitMs={phase === 'main' ? lesson.timeLimitMs : undefined}
+          label={stageLabel(phase, l)}
+          counter={`${qIndex + 1} / ${list.length}`}
+          color={path.color}
+          hook={{ phase, index: qIndex }}
+          onResult={record}
+          onNext={advance}
+          extra={
+            phase === 'main' && lesson.kind === 'lesson' && lesson.anchors[0] ? (
               <button
                 type="button"
                 className="btn btn-sm"
@@ -264,71 +170,9 @@ function LessonRunner({ path, lesson, onRetry }: { path: PathDef; lesson: Lesson
               >
                 ♪ {l(`Nghe mốc (còn ${3 - anchorUses}, trừ 1 câu đúng)`, `Anchor (${3 - anchorUses} left, costs 1 point)`)}
               </button>
-            )}
-          </div>
-
-          {isYesNo ? (
-            <div className="grid grid-cols-2 gap-3">
-              {(['yes', 'no'] as const).map((id) => {
-                const showHint = helped && id === q.answerId;
-                const state = feedback ? (id === q.answerId ? 'border-good bg-good/15' : feedback.chosen === id ? 'border-bad bg-bad/15' : 'border-line') : wrongFlash === id ? 'border-bad bg-bad/15' : showHint ? 'border-accent bg-accent/15' : 'border-line';
-                return (
-                  <button key={id} type="button" data-answer={id} className={`min-h-16 rounded-2xl border-2 bg-surface-2 text-lg font-bold ${state}`} onClick={() => answer(id)}>
-                    {id === 'yes' ? l(`Có — là ${name(lesson.yesItem!)}`, `Yes — it is ${name(lesson.yesItem!)}`) : l('Không', 'No')}
-                  </button>
-                );
-              })}
-            </div>
-          ) : !isPitch || s.learnPitchInput === 'buttons' ? (
-            <div className="flex flex-wrap gap-2">
-              {items.map((id, i) => {
-                const state = feedback ? (id === q.answerId ? 'border-good bg-good/15' : feedback.chosen === id ? 'border-bad bg-bad/15' : 'border-line') : wrongFlash === id ? 'border-bad bg-bad/15' : helped && id === q.answerId ? 'border-accent bg-accent/15' : 'border-line';
-                return (
-                  <button key={id} type="button" data-answer={id} className={`min-h-12 min-w-14 rounded-xl border-2 bg-surface-2 px-3 py-1 font-bold ${state}`} onClick={() => answer(id)}>
-                    {isPitch ? name(id) : (
-                      <span className="flex flex-col items-center leading-tight">
-                        <span className="text-lg">{itemSymbol(path.id, id)}</span>
-                        <span className="text-[11px] font-medium text-muted">{i + 1 <= 9 ? `${i + 1} · ` : ''}{l(itemName(path.id, id) ?? id)}</span>
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <PianoKeyboard
-              from={60}
-              to={71}
-              sound={false}
-              enabled={enabledKeys}
-              labels={s.learnKeyNames ? 'all' : 'c'}
-              naming={s.noteNaming}
-              accidentals={s.accidentals}
-              marks={keyMarks(q, feedback, wrongFlash, helped)}
-              onNote={(m) => {
-                const id = PITCH_ITEMS[((m % 12) + 12) % 12]!;
-                if (items.includes(id)) answer(id);
-              }}
-            />
-          )}
-
-          {feedback && !feedback.ok && (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-bad/10 px-4 py-3">
-              <span className="font-semibold text-bad-ink">
-                {feedback.chosen === null ? l('Hết giờ! ', 'Time is up! ') : ''}
-                {isYesNo
-                  ? l(`Đó là ${name(q.itemId)}.`, `That was ${name(q.itemId)}.`)
-                  : l(`Đáp án: ${name(q.answerId)}${feedback.chosen ? ` — bạn chọn ${name(feedback.chosen)}` : ''}`, `Answer: ${name(q.answerId)}${feedback.chosen ? ` — you picked ${name(feedback.chosen)}` : ''}`)}
-              </span>
-              <button type="button" className="btn btn-primary btn-sm" onClick={advance}>{l('Tiếp', 'Next')} →</button>
-            </div>
-          )}
-          {feedback && !isPitch && !q.chords && (
-            <PianoKeyboard from={36} to={84} sound={false} labels="c" naming={s.noteNaming} accidentals={s.accidentals} marks={Object.fromEntries([...q.notes, ...(q.tail ?? [])].map((n) => [n, 'correct' as KeyMark]))} />
-          )}
-          {feedback?.ok && graded && <div className="font-semibold text-good-ink">✓ {l('Đúng!', 'Right!')}</div>}
-          {helped && <p className="text-sm text-muted">{l('Đáp án đang sáng — nghe rồi bấm theo để làm quen.', 'The answer is lit — listen and press it to get used to the sound.')}</p>}
-        </section>
+            ) : undefined
+          }
+        />
       )}
 
       {phase === 'results' && (
@@ -352,18 +196,6 @@ function LessonRunner({ path, lesson, onRetry }: { path: PathDef; lesson: Lesson
 function nextOpenAfter(path: PathDef, index: number, progress: Parameters<typeof pathStatuses>[1]): boolean {
   const statuses = pathStatuses(path.lessons, progress);
   return statuses[index + 1] !== 'locked' && isPassed(progress.get(path.lessons[index]!.id));
-}
-
-function keyMarks(q: LearnQuestion, feedback: { chosen: string | null; ok: boolean } | null, wrongFlash: string | null, helped: boolean): Record<number, KeyMark> {
-  const key = (id: string) => 60 + itemPc(id);
-  const marks: Record<number, KeyMark> = {};
-  if (helped && !feedback) marks[key(q.answerId)] = 'hint';
-  if (wrongFlash) marks[key(wrongFlash)] = 'wrong';
-  if (feedback) {
-    if (feedback.chosen && !feedback.ok) marks[key(feedback.chosen)] = 'wrong';
-    marks[key(q.answerId)] = 'correct';
-  }
-  return marks;
 }
 
 function stageLabel(phase: Phase, l: ReturnType<typeof useL>): string {
@@ -467,6 +299,7 @@ function Results(props: {
         </div>
       )}
       {worst && <div className="text-sm">{l(`Hay nhầm nhất: ${name(worst[0])} (${worst[1]} lần)`, `Most missed: ${name(worst[0])} (${worst[1]}×)`)}</div>}
+      {outcome.graduated && <div className="rounded-xl bg-accent/15 px-4 py-2 text-sm font-bold">🎓 {l(`Tốt nghiệp lộ trình ${l(path.title)}! Giải mới trong trang Giải thưởng.`, `${l(path.title)} path graduate! New award on the Awards page.`)}</div>}
       {outcome.skipped.length > 0 && <div className="rounded-xl bg-good/10 px-4 py-2 text-sm font-semibold text-good-ink">{l(`Đã bỏ qua ${outcome.skipped.length} bài phía trước.`, `${outcome.skipped.length} earlier lessons skipped.`)}</div>}
       <div className="flex flex-wrap justify-center gap-2">
         {lesson.kind === 'lesson' && <button type="button" className={`btn ${pinned ? 'btn-primary' : ''}`} onClick={onPin} aria-pressed={pinned}>📌 {pinned ? l('Đã ghim', 'Pinned') : l('Ghim để ôn', 'Pin for review')}</button>}
