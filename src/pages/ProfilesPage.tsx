@@ -148,6 +148,24 @@ export function ProfilesPage() {
               <option value="maid">{s.language === 'vi' ? 'Hầu gái' : 'Maid'}</option>
             </select>
           </Field>
+          <Field label={s.language === 'vi' ? 'Lộ trình Cao độ: cách trả lời' : 'Pitch path: answer with'}>
+            <select className="field" value={s.learnPitchInput ?? 'piano'} onChange={(e) => set({ learnPitchInput: e.target.value as ProfileSettings['learnPitchInput'] })}>
+              <option value="piano">{s.language === 'vi' ? 'Bàn phím piano' : 'Piano keyboard'}</option>
+              <option value="buttons">{s.language === 'vi' ? 'Nút tên nốt' : 'Note-name buttons'}</option>
+            </select>
+          </Field>
+          <Field label={s.language === 'vi' ? 'Lộ trình: tên nốt trên phím' : 'Paths: note names on keys'}>
+            <select className="field" value={s.learnKeyNames ? 'all' : 'c'} onChange={(e) => set({ learnKeyNames: e.target.value === 'all' })}>
+              <option value="c">{s.language === 'vi' ? 'Chỉ nốt Đô' : 'Only C'}</option>
+              <option value="all">{s.language === 'vi' ? 'Mọi phím' : 'Every key'}</option>
+            </select>
+          </Field>
+          <Field label={s.language === 'vi' ? 'Lộ trình: khi trả lời sai' : 'Paths: after a wrong answer'}>
+            <select className="field" value={(s.learnCompare ?? true) ? 'on' : 'off'} onChange={(e) => set({ learnCompare: e.target.value === 'on' })}>
+              <option value="on">{s.language === 'vi' ? 'Phát lựa chọn của bạn rồi đáp án' : 'Play your answer, then the right one'}</option>
+              <option value="off">{s.language === 'vi' ? 'Không phát lại' : 'Do not replay'}</option>
+            </select>
+          </Field>
           <Field label={t('profiles.instrument')}>
             <select
               className="field"

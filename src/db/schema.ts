@@ -1,5 +1,6 @@
 import Dexie, { type Table } from 'dexie';
 import type { InstrumentId } from '../audio/engine';
+import type { ItemMastery, LessonProgress } from '../learn/types';
 import type { Lang, NoteNaming } from '../theory';
 
 export type ThemeName = 'dark' | 'light';
@@ -24,6 +25,12 @@ export interface ProfileSettings {
   mascotOutfit: 'casual' | 'maid';
   /** Every shop instrument available without buying. */
   unlockAll: boolean;
+  /** Learning paths: answer the Pitch path on a piano or with note-name buttons. */
+  learnPitchInput: 'piano' | 'buttons';
+  /** Learning paths: show every note name on the piano keys. */
+  learnKeyNames: boolean;
+  /** Learning paths: after a wrong answer play your answer, then the right one. */
+  learnCompare: boolean;
 }
 
 export interface Profile {
@@ -130,6 +137,9 @@ export const DEFAULT_SETTINGS: ProfileSettings = {
   workoutResetHour: 4,
   mascotOutfit: 'casual',
   unlockAll: false,
+  learnPitchInput: 'piano',
+  learnKeyNames: false,
+  learnCompare: true,
 };
 
 export function emptyStats(profileId: number): ProfileStats {
@@ -157,6 +167,8 @@ export class EarLabDB extends Dexie {
   exerciseBests!: Table<ExerciseBest, [number, string]>;
   toolData!: Table<ToolDataEntry, [number, string]>;
   contestEntries!: Table<ContestEntry, number>;
+  lessonProgress!: Table<LessonProgress, [number, string]>;
+  itemMastery!: Table<ItemMastery, [number, string, string]>;
 
   constructor(name = 'earlab') {
     super(name);
@@ -202,6 +214,19 @@ export class EarLabDB extends Dexie {
       exerciseBests: '[profileId+exerciseId], profileId',
       toolData: '[profileId+key], profileId',
       contestEntries: '++id, week, profileId',
+    });
+    this.version(5).stores({
+      profiles: '++id, name, createdAt',
+      meta: 'key',
+      gameProgress: '[profileId+gameId], profileId',
+      attempts: '++id, profileId, gameId, at',
+      workouts: '[profileId+date], profileId',
+      stats: 'profileId',
+      exerciseBests: '[profileId+exerciseId], profileId',
+      toolData: '[profileId+key], profileId',
+      contestEntries: '++id, week, profileId',
+      lessonProgress: '[profileId+lessonId], profileId, [profileId+pathId]',
+      itemMastery: '[profileId+pathId+itemId], profileId, [profileId+pathId]',
     });
   }
 }

@@ -127,3 +127,8 @@ body {
     @apply min-h-10 rounded-full border border-line bg-surface px-4 text-sm font-medium text-ink-2 transition hover:border-muted;
   }
 }
+
+@keyframes learn-timer {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}

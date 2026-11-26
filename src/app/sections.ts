@@ -45,11 +45,11 @@ export const SECTIONS: readonly Section[] = [
     },
   },
   {
-    key: 'learn', path: '/learn', phase: 7, ready: true,
+    key: 'learn', path: '/learn', phase: 8, ready: true,
     name: { vi: 'Học', en: 'Learn' },
     description: {
-      vi: 'Khóa nhạc lý 7 chương do thầy nhạc dẫn, có ví dụ nghe và câu hỏi.',
-      en: 'A seven-unit theory course led by the music teacher, with listening examples and quizzes.',
+      vi: 'Lộ trình từng bước: lý thuyết, bài hát làm mốc, luyện tập, checkpoint và thi cuối; kèm khóa nhạc lý 7 chương.',
+      en: 'Step-by-step paths: theory, anchor songs, drills, checkpoints and a final exam; plus the seven-unit theory course.',
     },
   },
 ];

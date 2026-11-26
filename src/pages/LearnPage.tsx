@@ -22,6 +22,7 @@ export function LearnPage() {
   const total = LESSONS.length;
   return (
     <div className="flex flex-col gap-6">
+      <Link to="/learn" className="text-sm font-semibold text-link">← {l('Lộ trình học', 'Learning paths')}</Link>
       <section className="flex flex-wrap items-center gap-4 rounded-[20px] border border-line bg-surface px-5 py-4">
         <Teacher mood="wave" size={100} />
         <div className="min-w-0 flex-[1_1_280px]">
@@ -45,7 +46,7 @@ export function LearnPage() {
               <ol className="flex flex-col gap-1.5">
                 {lessons.map((x) => (
                   <li key={x.id}>
-                    <Link to={`/learn/${x.id}`} className="flex items-center justify-between rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-ink no-underline hover:border-accent">
+                    <Link to={`/learn/theory/${x.id}`} className="flex items-center justify-between rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-ink no-underline hover:border-accent">
                       <span>{l(x.title)}</span>
                       {done.includes(x.id) ? <span className="font-bold text-good-ink">✓</span> : <span className="text-muted">→</span>}
                     </Link>
@@ -90,7 +91,7 @@ export function LessonPage() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
-      <Link to="/learn" className="text-sm font-semibold text-link">← {l('Khóa nhạc lý', 'Theory course')}</Link>
+      <Link to="/learn/theory" className="text-sm font-semibold text-link">← {l('Khóa nhạc lý', 'Theory course')}</Link>
       <section className="card flex flex-col gap-4">
         <div className="flex items-center gap-3">
           <Teacher mood={passed ? 'cheer' : 'wave'} size={72} />
@@ -139,7 +140,7 @@ export function LessonPage() {
       </section>
       <div className="flex flex-wrap justify-between gap-3">
         {lesson.practice ? <Link className="btn" to={lesson.practice.to}>{l('Luyện ngay', 'Practise')}: {l(lesson.practice.label)}</Link> : <span />}
-        {next ? <Link className="btn btn-primary" to={`/learn/${next.id}`}>{l('Bài tiếp', 'Next lesson')} →</Link> : <Link className="btn btn-primary" to="/awards">{l('Xem chứng chỉ', 'See certificate')} →</Link>}
+        {next ? <Link className="btn btn-primary" to={`/learn/theory/${next.id}`}>{l('Bài tiếp', 'Next lesson')} →</Link> : <Link className="btn btn-primary" to="/awards">{l('Xem chứng chỉ', 'See certificate')} →</Link>}
       </div>
     </div>
   );

@@ -246,7 +246,7 @@ export function GymPage() {
               </div>
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-surface-2"><div className="h-full bg-teal" style={{ width: `${(lessonsDone.length / LESSONS.length) * 100}%` }} /></div>
-            <Link to={nextLesson ? `/learn/${nextLesson.id}` : '/awards'} className="text-sm font-semibold text-link">
+            <Link to={nextLesson ? `/learn/theory/${nextLesson.id}` : '/awards'} className="text-sm font-semibold text-link">
               {nextLesson ? l(`Học tiếp bài ${lessonsDone.length + 1}/${LESSONS.length} →`, `Continue lesson ${lessonsDone.length + 1}/${LESSONS.length} →`) : l('Xem chứng chỉ →', 'See your certificate →')}
             </Link>
           </section>
