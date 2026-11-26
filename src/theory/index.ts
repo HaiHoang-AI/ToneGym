@@ -5,3 +5,5 @@ export * from './chords';
 export * from './scales';
 export * from './progressions';
 export * from './rng';
+export * from './rhythm';
+export * from './melody';

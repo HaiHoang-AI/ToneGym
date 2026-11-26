@@ -14,11 +14,13 @@ describe('registry', () => {
     expect(new Set(GAMES.map((g) => g.id)).size).toBe(18);
   });
 
-  it('ships the nine listening games in phase 2', () => {
-    expect(playableGames().map((g) => g.id)).toEqual([
+  it('ships the listening games (phase 2) and the rhythm and melody games (phase 3)', () => {
+    expect(playableGames().map((g) => g.id)).toEqual(expect.arrayContaining([
       'harmonic-intervals', 'ascending-intervals', 'descending-intervals', 'interval-compare',
       'chord-id', 'chord-by-name', 'inversions', 'scale-id', 'progressions',
-    ]);
+      'melody-hunt', 'melody-copy', 'rhythm-echo', 'rhythm-read',
+    ]));
+    for (const g of playableGames()) expect(g.phase).toBeLessThanOrEqual(5);
   });
 });
 
@@ -29,6 +31,18 @@ describe('question builders', () => {
       for (const level of SAMPLE_LEVELS) {
         for (let i = 0; i < 25; i++) {
           const q = game.makeQuestion!(level, rng, ctx);
+          if (q.input) {
+            expect(q.correctId).toBe('ok');
+            if (q.input.kind === 'notes') {
+              expect(q.input.target.length).toBeGreaterThanOrEqual(3);
+              for (const n of q.input.target) expect(q.input.palette).toContain(n);
+            } else {
+              const beats = q.input.pattern.events.reduce((s, e) => s + e.dur, 0);
+              expect(beats).toBeCloseTo(q.input.pattern.beatsPerBar * q.input.pattern.bars);
+              expect(q.input.pattern.events[0]!.rest).toBe(false);
+            }
+            continue;
+          }
           const ids = q.options.map((o) => o.id);
           expect(ids).toContain(q.correctId);
           expect(new Set(ids).size).toBe(ids.length);

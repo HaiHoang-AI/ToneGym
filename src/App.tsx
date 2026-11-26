@@ -10,6 +10,11 @@ import { StatsPage } from './pages/StatsPage';
 import { SoundCheckPage } from './pages/SoundCheckPage';
 import { ProfilesPage } from './pages/ProfilesPage';
 import { ComingSoonPage } from './pages/ComingSoonPage';
+import { PlaygroundPage } from './pages/PlaygroundPage';
+import { MelodyPlaygroundPage } from './pages/MelodyPlaygroundPage';
+
+/** Highest build phase merged into this app (gates "coming soon" items). */
+export const SHIPPED_PHASE = 3;
 
 export default function App() {
   return (
@@ -22,6 +27,8 @@ export default function App() {
             <Route path="play/:gameId" element={<PlayPage />} />
             <Route path="exercises" element={<ExercisesPage />} />
             <Route path="stats" element={<StatsPage />} />
+            <Route path="playground" element={<PlaygroundPage shipped={SHIPPED_PHASE} />} />
+            <Route path="playground/melody" element={<MelodyPlaygroundPage />} />
             <Route path="sound" element={<SoundCheckPage />} />
             <Route path="profiles" element={<ProfilesPage />} />
             {SECTIONS.filter((s) => !s.ready).map((s) => (

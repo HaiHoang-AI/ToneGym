@@ -2,6 +2,7 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router-dom';
+import { LatencyCalibrator } from '../components/LatencyCalibrator';
 import { useProfile } from '../app/ProfileContext';
 import {
   createProfile, deleteProfile, listProfiles, renameProfile, setActiveProfile, updateSettings,
@@ -195,6 +196,9 @@ export function ProfilesPage() {
               onChange={(e) => set({ tapLatencyMs: Number(e.target.value) || 0 })}
             />
           </Field>
+          <div className="sm:col-span-2">
+            <LatencyCalibrator onResult={(ms) => set({ tapLatencyMs: ms })} />
+          </div>
         </div>
         <fieldset className="space-y-2">
           <legend className="label">{t('profiles.vocalRange')}</legend>
