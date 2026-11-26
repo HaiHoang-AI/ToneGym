@@ -9,6 +9,8 @@ import { getPath, PATH_CARDS, type PathCard } from '../../learn/paths';
 import { countDone } from '../../learn/stars';
 import { useAllLearnData } from '../../learn/store';
 import { useToolData } from '../../tools/useToolData';
+import { localDate } from '../../learn/store';
+import { DAILY_DONE_KEY, dailySummary } from './DailySession';
 
 export function LearnHub() {
   const l = useL();
@@ -16,16 +18,30 @@ export function LearnHub() {
   const data = useAllLearnData(profile.id);
   const [theoryDone] = useToolData<string[]>('lessons-done', []);
   const [open, setOpen] = useState<PathCard | null>(null);
+  const [dailyDone] = useToolData<string[]>(DAILY_DONE_KEY, []);
+  const daily = data ? dailySummary(data.progress, data.mastery) : null;
+  const doneToday = dailyDone.includes(localDate());
+  const overall = data
+    ? Math.round(
+        (PATH_CARDS.reduce((sum, c) => {
+          const path = getPath(c.id)!;
+          return sum + pathMastery(path.items, new Map(data.mastery.filter((m) => m.pathId === c.id).map((m) => [m.itemId, m])));
+        }, 0) /
+          PATH_CARDS.length) *
+          100,
+      )
+    : 0;
 
   const stat = (card: PathCard) => {
     const path = getPath(card.id);
-    if (!path || !data) return { done: 0, mastery: 0, pinned: 0 };
+    if (!path || !data) return { done: 0, mastery: 0, pinned: 0, pinnedIds: [] as string[] };
     const progress = new Map(data.progress.filter((p) => p.pathId === card.id).map((p) => [p.lessonId, p]));
     const mastery = new Map(data.mastery.filter((m) => m.pathId === card.id).map((m) => [m.itemId, m]));
     return {
       done: countDone(path.lessons, progress),
       mastery: Math.round(pathMastery(path.items, mastery) * 100),
       pinned: [...progress.values()].filter((p) => p.pinned).length,
+      pinnedIds: path.lessons.filter((x) => progress.get(x.id)?.pinned).map((x) => x.id),
     };
   };
 
@@ -45,6 +61,21 @@ export function LearnHub() {
         </div>
         <Yumika mood="cheer" size={84} outfit={profile.settings.mascotOutfit ?? 'casual'} />
       </section>
+
+      <Link to="/learn/daily" data-testid="daily-card" className="flex flex-wrap items-center gap-4 rounded-[20px] border-2 border-accent/60 bg-accent/10 px-5 py-4 text-ink no-underline hover:bg-accent/15">
+        <span className="text-4xl" aria-hidden="true">{doneToday ? '✅' : '🎧'}</span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-lg font-bold">{l('Buổi luyện hôm nay', "Today's session")}</span>
+          <span className="text-sm text-muted">
+            {doneToday ? l('Đã xong hôm nay — luyện thêm nếu muốn. ', 'Done today — practise more if you like. ') : ''}
+            {l('~3 phút', '~3 min')}{daily ? l(` · ${daily.reviews} câu ôn · +${daily.fresh} mới`, ` · ${daily.reviews} reviews · +${daily.fresh} new`) : ''}
+          </span>
+        </span>
+        <span className="text-right">
+          <span className="block text-xs text-muted">{l('Thành thạo chung', 'Overall mastery')}</span>
+          <span className="h-display text-2xl font-bold">{overall}%</span>
+        </span>
+      </Link>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {PATH_CARDS.map((card) => {
@@ -81,13 +112,15 @@ export function LearnHub() {
         </Link>
       </div>
 
-      {open && <PathSheet card={open} pinned={stat(open).pinned} onClose={() => setOpen(null)} />}
+      {open && <PathSheet card={open} pinnedIds={stat(open).pinnedIds} onClose={() => setOpen(null)} />}
     </div>
   );
 }
 
-function PathSheet({ card, pinned, onClose }: { card: PathCard; pinned: number; onClose: () => void }) {
+function PathSheet({ card, pinnedIds, onClose }: { card: PathCard; pinnedIds: string[]; onClose: () => void }) {
   const l = useL();
+  const pinned = pinnedIds.length;
+  const path = getPath(card.id);
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/50 sm:items-center" onClick={onClose} role="dialog" aria-modal="true" aria-label={l(card.title)}>
       <div className="w-full max-w-md rounded-t-3xl border border-line bg-surface p-5 sm:rounded-3xl" onClick={(e) => e.stopPropagation()}>
@@ -103,12 +136,20 @@ function PathSheet({ card, pinned, onClose }: { card: PathCard; pinned: number; 
             </span>
             <span aria-hidden="true">→</span>
           </Link>
-          <div className="flex items-center justify-between rounded-2xl border border-dashed border-line px-4 py-3 opacity-70">
+          {pinned > 0 && path && (
+            <ul className="flex flex-col gap-1.5 pl-2" aria-label={l('Bài đã ghim', 'Pinned lessons')}>
+              {pinnedIds.map((id) => (
+                <li key={id}><Link to={`/learn/${card.id}/${id}`} className="text-sm font-semibold text-link">📌 {l(path.lessons.find((x) => x.id === id)!.title)}</Link></li>
+              ))}
+            </ul>
+          )}
+          <Link to={`/learn/${card.id}/practice`} className="flex items-center justify-between rounded-2xl border border-line bg-surface-2 px-4 py-3 text-ink no-underline hover:border-accent">
             <span>
               <span className="block text-lg font-bold">{l('Luyện', 'Practice')}</span>
-              <span className="text-sm text-muted">{l('Quiz 60 giây — có ở giai đoạn 8e', '60-second quiz — arrives in phase 8e')}</span>
+              <span className="text-sm text-muted">{l('Quiz 60 giây với các mục đã học', '60-second quiz on what you have learned')}</span>
             </span>
-          </div>
+            <span aria-hidden="true">→</span>
+          </Link>
         </div>
       </div>
     </div>

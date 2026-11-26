@@ -1,6 +1,6 @@
 import Dexie, { type Table } from 'dexie';
 import type { InstrumentId } from '../audio/engine';
-import type { ItemMastery, LessonProgress } from '../learn/types';
+import type { ItemMastery, LessonProgress, MasteryDay } from '../learn/types';
 import type { Lang, NoteNaming } from '../theory';
 
 export type ThemeName = 'dark' | 'light';
@@ -31,6 +31,8 @@ export interface ProfileSettings {
   learnKeyNames: boolean;
   /** Learning paths: after a wrong answer play your answer, then the right one. */
   learnCompare: boolean;
+  /** Learning paths, practice mode: questions in C, or in random keys / roots. */
+  learnPracticeKey: 'c' | 'random';
 }
 
 export interface Profile {
@@ -140,6 +142,7 @@ export const DEFAULT_SETTINGS: ProfileSettings = {
   learnPitchInput: 'piano',
   learnKeyNames: false,
   learnCompare: true,
+  learnPracticeKey: 'random',
 };
 
 export function emptyStats(profileId: number): ProfileStats {
@@ -169,6 +172,7 @@ export class EarLabDB extends Dexie {
   contestEntries!: Table<ContestEntry, number>;
   lessonProgress!: Table<LessonProgress, [number, string]>;
   itemMastery!: Table<ItemMastery, [number, string, string]>;
+  masteryDaily!: Table<MasteryDay, [number, string, string]>;
 
   constructor(name = 'earlab') {
     super(name);
@@ -227,6 +231,20 @@ export class EarLabDB extends Dexie {
       contestEntries: '++id, week, profileId',
       lessonProgress: '[profileId+lessonId], profileId, [profileId+pathId]',
       itemMastery: '[profileId+pathId+itemId], profileId, [profileId+pathId]',
+    });
+    this.version(6).stores({
+      profiles: '++id, name, createdAt',
+      meta: 'key',
+      gameProgress: '[profileId+gameId], profileId',
+      attempts: '++id, profileId, gameId, at',
+      workouts: '[profileId+date], profileId',
+      stats: 'profileId',
+      exerciseBests: '[profileId+exerciseId], profileId',
+      toolData: '[profileId+key], profileId',
+      contestEntries: '++id, week, profileId',
+      lessonProgress: '[profileId+lessonId], profileId, [profileId+pathId]',
+      itemMastery: '[profileId+pathId+itemId], profileId, [profileId+pathId]',
+      masteryDaily: '[profileId+date+pathId], profileId',
     });
   }
 }
