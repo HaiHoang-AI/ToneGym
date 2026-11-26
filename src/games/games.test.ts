@@ -18,7 +18,7 @@ describe('registry', () => {
     expect(playableGames().map((g) => g.id)).toEqual(expect.arrayContaining([
       'harmonic-intervals', 'ascending-intervals', 'descending-intervals', 'interval-compare',
       'chord-id', 'chord-by-name', 'inversions', 'scale-id', 'progressions',
-      'melody-hunt', 'melody-copy', 'rhythm-echo', 'rhythm-read',
+      'melody-hunt', 'melody-copy', 'rhythm-echo', 'rhythm-read', 'treble-reading', 'bass-reading',
     ]));
     for (const g of playableGames()) expect(g.phase).toBeLessThanOrEqual(5);
   });
@@ -47,7 +47,8 @@ describe('question builders', () => {
           expect(ids).toContain(q.correctId);
           expect(new Set(ids).size).toBe(ids.length);
           expect(q.options.length).toBeGreaterThanOrEqual(2);
-          if (!q.soundChoice) expect(soundLength(q.sound)).toBeGreaterThan(0);
+          if (!q.soundChoice && !q.staff) expect(soundLength(q.sound)).toBeGreaterThan(0);
+          if (q.staff) expect(q.staff.stacks.flat().length).toBeGreaterThan(0);
           for (const step of q.sound.steps) {
             for (const n of step.notes) {
               expect(n).toBeGreaterThanOrEqual(21);

@@ -7,6 +7,7 @@ import { GameArt } from '../components/art/GameArt';
 import { Yumika } from '../components/art/Characters';
 import { NoteInput } from '../components/NoteInput';
 import { RhythmInput } from '../components/RhythmInput';
+import { Staff } from '../components/Staff';
 import { melodic } from '../games/sound';
 import { getGame } from '../games/registry';
 import { CHANGE_LEVEL_FROM, HINTS_PER_LEVEL, LIVES_PER_LEVEL, STAGES_PER_LEVEL } from '../games/levels';
@@ -371,7 +372,12 @@ export function PlayPage() {
             {l(session.question.title)}
             {session.question.display && <span className="ml-2 text-link">{session.question.display}</span>}
           </h1>
-          {!session.question.soundChoice && (
+          {session.question.staff && (
+            <div className="w-full rounded-xl bg-surface-2 py-2">
+              <Staff spec={session.question.staff} theme={profile.settings.theme} />
+            </div>
+          )}
+          {!session.question.soundChoice && !session.question.staff && (
             <button
               type="button"
               onClick={() => void play(session.question.sound)}

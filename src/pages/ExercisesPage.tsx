@@ -4,6 +4,7 @@ import { useProfile } from '../app/ProfileContext';
 import { useL } from '../app/useL';
 import { PianoKeyboard, type KeyMark } from '../components/PianoKeyboard';
 import { RhythmInput } from '../components/RhythmInput';
+import { Staff } from '../components/Staff';
 import { db } from '../db/schema';
 import {
   checkPlayed, makeExercise, MODES_BY_TOPIC, RHYTHM_BPM, type Direction, type ExerciseQuestion, type ExerciseSettings, type Mode,
@@ -27,6 +28,7 @@ const MODE_NAMES: Record<Mode, [string, string]> = {
   compare: ['So sánh', 'Compare'],
   play: ['Chơi trên piano', 'Play on piano'],
   tap: ['Đọc và gõ', 'Read and tap'],
+  read: ['Đọc nốt', 'Read'],
 };
 const GOAL = 10;
 
@@ -109,7 +111,7 @@ export function ExercisesPage() {
     setQ(question);
     setPicked(null);
     setPlayed([]);
-    if (s.topic === 'rhythm') return;
+    if (s.topic === 'rhythm' || s.mode === 'read') return;
     if (s.mode === 'play' && question.given) {
       await play({ steps: [{ notes: question.given, at: 0, duration: 1 }] });
       await play(question.sound);
@@ -370,7 +372,9 @@ export function ExercisesPage() {
             <div>
               <div className="label !mb-0">{l(MODE_NAMES[s.mode][0], MODE_NAMES[s.mode][1])} · {l(TOPICS.find((t) => t.id === s.topic)!.vi, TOPICS.find((t) => t.id === s.topic)!.en).toLowerCase()}</div>
               <h1 className="h-display mt-1.5 text-[26px] font-bold">
-                {s.mode === 'tap'
+                {s.mode === 'read'
+                  ? l('Đọc trên khuông và chọn tên', 'Read the staff and name it')
+                  : s.mode === 'tap'
                   ? l('Đọc tiết tấu, gõ đúng nhịp', 'Read the rhythm, tap it in time')
                   : s.mode === 'play'
                   ? l('Nghe rồi chơi lại trên piano', 'Listen, then play it on the piano')
@@ -411,6 +415,12 @@ export function ExercisesPage() {
                 void record(g.passed, `${g.expected.filter((e) => e.hit).length}/${g.expected.length}`);
               }}
             />
+          )}
+
+          {q?.staff && (
+            <div className="rounded-xl bg-surface-2 py-2">
+              <Staff spec={q.staff} theme={profile.settings.theme} />
+            </div>
           )}
 
           {q && !q.rhythm && s.mode !== 'play' && (

@@ -1,6 +1,7 @@
 import { chordByNameQuestion, chordIdQuestion, inversionQuestion } from './defs/chords';
 import { compareQuestion, intervalQuestion } from './defs/intervals';
 import { progressionQuestion, scaleQuestion } from './defs/scalesProgressions';
+import { readingQuestion } from './defs/reading';
 import { melodyCopyQuestion, melodyHuntQuestion, rhythmEchoQuestion, rhythmReadQuestion } from './defs/melodyRhythm';
 import type { GameDef } from './types';
 
@@ -91,11 +92,13 @@ export const GAMES: GameDef[] = [
     id: 'treble-reading', skill: 'reading', phase: 4, art: { variant: 0, mark: 'up' },
     name: { vi: 'Đọc khóa Sol', en: 'Treble Reader' },
     desc: { vi: 'Đọc nốt, quãng, hợp âm trên khóa Sol càng nhanh càng tốt.', en: 'Read notes, intervals and chords on the treble clef, fast.' },
+    makeQuestion: readingQuestion('treble'),
   },
   {
     id: 'bass-reading', skill: 'reading', phase: 4, art: { variant: 2, mark: 'down' },
     name: { vi: 'Đọc khóa Fa', en: 'Bass Reader' },
     desc: { vi: 'Luyện đọc khóa Fa: nhanh, chính xác, tự tin.', en: 'Bass clef reading: speed, accuracy, confidence.' },
+    makeQuestion: readingQuestion('bass'),
   },
   {
     id: 'sing-back', skill: 'singing', phase: 5, art: { variant: 3, mark: 'up' },
